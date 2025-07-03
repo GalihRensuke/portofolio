@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useDragControls, PanInfo } from 'framer-motion';
-import { MessageCircle, X, Send, Loader, ArrowRight, Terminal, Zap, Move } from 'lucide-react';
+import { MessageCircle, X, Send, Loader, ArrowRight, Terminal, Zap, Move, AlertCircle } from 'lucide-react';
 import { useProactiveAITrigger } from '../hooks/useProactiveAITrigger';
 
 interface Message {
   id: string;
-  type: 'user' | 'assistant';
+  type: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: Date;
 }
@@ -151,6 +151,7 @@ const ProactiveAIConcierge = () => {
   const [input, setInput] = useState('');
   const [position, setPosition] = useState<Position>({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [webhookStatus, setWebhookStatus] = useState<'unknown' | 'working' | 'failed'>('unknown');
   const [conversation, setConversation] = useState<ConversationState>({
     messages: [],
     isTyping: false,
@@ -263,7 +264,7 @@ const ProactiveAIConcierge = () => {
     };
   }, [isOpen, conversation.messages.length]);
 
-  const addMessage = (type: 'user' | 'assistant', content: string) => {
+  const addMessage = (type: 'user' | 'assistant' | 'system', content: string) => {
     const message: Message = {
       id: Date.now().toString(),
       type,
@@ -278,6 +279,31 @@ const ProactiveAIConcierge = () => {
     }));
   };
 
+  const testWebhookConnection = async (webhookUrl: string): Promise<boolean> => {
+    try {
+      const testPayload = {
+        type: 'connection_test',
+        timestamp: new Date().toISOString(),
+        source: 'ai_concierge_test'
+      };
+
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Source': 'galyarder-ai-concierge',
+          'X-Type': 'connection_test',
+        },
+        body: JSON.stringify(testPayload),
+      });
+
+      return response.ok;
+    } catch (error) {
+      console.error('Webhook connection test failed:', error);
+      return false;
+    }
+  };
+
   const handleSend = async () => {
     if (!input.trim()) return;
 
@@ -288,13 +314,25 @@ const ProactiveAIConcierge = () => {
     setConversation(prev => ({ ...prev, isTyping: true, showSuggestions: false }));
 
     try {
-      // Send user message to n8n webhook for AI processing
+      // Determine webhook URL based on environment
       const isProduction = import.meta.env.VITE_ENVIRONMENT === 'production';
       const webhookUrl = isProduction 
         ? (import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook/f2b9aa71-235b-49f4-80fb-f16cb2e63913')
         : (import.meta.env.VITE_N8N_TEST_WEBHOOK_URL || 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook-test/f2b9aa71-235b-49f4-80fb-f16cb2e63913');
 
       console.log('Sending AI chat message to webhook:', webhookUrl);
+
+      // Test webhook connection first if status is unknown or failed
+      if (webhookStatus !== 'working') {
+        console.log('Testing webhook connection...');
+        const isWorking = await testWebhookConnection(webhookUrl);
+        setWebhookStatus(isWorking ? 'working' : 'failed');
+        
+        if (!isWorking) {
+          console.warn('Webhook connection test failed, using local response');
+          throw new Error('Webhook connection test failed');
+        }
+      }
 
       const payload = {
         type: 'ai_chat',
@@ -323,29 +361,36 @@ const ProactiveAIConcierge = () => {
 
       console.log('Webhook response status:', response.status);
 
-      if (response.ok) {
-        const result = await response.json();
-        console.log('Webhook response:', result);
-        
-        // Check for AI response in various possible fields
-        const aiResponse = result.ai_response || result.response || result.message || result.output;
-        
-        if (aiResponse) {
-          addMessage('assistant', aiResponse);
-        } else {
-          console.warn('No AI response found in webhook result:', result);
-          // Fallback to local AI response generation
-          const localResponse = generateSystemResponse(userMessage);
-          addMessage('assistant', localResponse);
-        }
-      } else {
+      if (!response.ok) {
         const errorText = await response.text();
-        console.error('Webhook error:', errorText);
-        throw new Error(`Webhook failed: ${response.status}`);
+        console.error('Webhook error response:', errorText);
+        setWebhookStatus('failed');
+        throw new Error(`Webhook failed: ${response.status} - ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('Webhook response:', result);
+      
+      // Check for AI response in various possible fields
+      const aiResponse = result.ai_response || result.response || result.message || result.output;
+      
+      if (aiResponse) {
+        setWebhookStatus('working');
+        addMessage('assistant', aiResponse);
+      } else {
+        console.warn('No AI response found in webhook result:', result);
+        setWebhookStatus('failed');
+        throw new Error('No AI response in webhook result');
       }
 
     } catch (error) {
       console.error('AI chat webhook failed, using local response:', error);
+      setWebhookStatus('failed');
+      
+      // Add system message about fallback mode on first failure
+      if (webhookStatus !== 'failed') {
+        addMessage('system', 'Note: AI system is operating in local mode. Full capabilities will be restored when the remote AI service is available.');
+      }
       
       // Fallback to local AI response generation
       const localResponse = generateSystemResponse(userMessage);
@@ -514,6 +559,7 @@ const ProactiveAIConcierge = () => {
       isTyping: false,
       showSuggestions: true
     });
+    setWebhookStatus('unknown'); // Reset webhook status
     localStorage.removeItem('galyarder_ai_conversation');
   };
 
@@ -593,7 +639,14 @@ const ProactiveAIConcierge = () => {
                 </div>
                 <div className="min-w-0">
                   <h3 className="font-semibold text-white text-xs sm:text-sm truncate">AI Interface</h3>
-                  <p className="text-xs text-gray-400 truncate">Flagship Partner Identification System</p>
+                  <div className="flex items-center space-x-2">
+                    <p className="text-xs text-gray-400 truncate">Flagship Partner Identification System</p>
+                    {webhookStatus === 'failed' && (
+                      <div className="flex items-center text-yellow-400" title="Operating in local mode">
+                        <AlertCircle className="w-3 h-3" />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
@@ -628,6 +681,8 @@ const ProactiveAIConcierge = () => {
                     className={`max-w-[85%] p-3 sm:p-4 rounded-xl text-xs sm:text-sm leading-relaxed ${
                       message.type === 'user'
                         ? 'bg-indigo-500 text-white shadow-lg'
+                        : message.type === 'system'
+                        ? 'bg-yellow-500/20 text-yellow-200 border border-yellow-500/30 shadow-md'
                         : 'bg-gray-800/80 text-gray-200 border border-gray-700/50 shadow-md'
                     }`}
                   >
@@ -668,7 +723,9 @@ const ProactiveAIConcierge = () => {
                   <div className="bg-gray-800/80 border border-gray-700/50 p-3 sm:p-4 rounded-xl shadow-md">
                     <div className="flex items-center space-x-2">
                       <Loader className="h-3 w-3 sm:h-4 sm:w-4 text-indigo-400 animate-spin" />
-                      <span className="text-gray-400 text-xs">Analyzing for flagship potential...</span>
+                      <span className="text-gray-400 text-xs">
+                        {webhookStatus === 'working' ? 'Analyzing for flagship potential...' : 'Processing locally...'}
+                      </span>
                     </div>
                   </div>
                 </div>
