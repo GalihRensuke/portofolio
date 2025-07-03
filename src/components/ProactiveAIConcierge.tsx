@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useDragControls, PanInfo } from 'framer-motion';
-import { MessageCircle, X, Send, Loader, ArrowRight, Terminal, Zap, Move, AlertCircle } from 'lucide-react';
+import { MessageCircle, X, Send, Loader, ArrowRight, Terminal, Zap, Move, AlertCircle, Wifi, WifiOff } from 'lucide-react';
 import { useProactiveAITrigger } from '../hooks/useProactiveAITrigger';
 
 interface Message {
@@ -152,6 +152,7 @@ const ProactiveAIConcierge = () => {
   const [position, setPosition] = useState<Position>({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [webhookStatus, setWebhookStatus] = useState<'unknown' | 'working' | 'failed'>('unknown');
+  const [lastWebhookError, setLastWebhookError] = useState<string>('');
   const [conversation, setConversation] = useState<ConversationState>({
     messages: [],
     isTyping: false,
@@ -303,14 +304,19 @@ const ProactiveAIConcierge = () => {
       
       if (response.ok) {
         console.log('Webhook connection test successful');
+        setLastWebhookError('');
         return true;
       } else {
         const errorText = await response.text();
-        console.error('Webhook test failed with status:', response.status, 'Response:', errorText);
+        const errorMessage = `Status ${response.status}: ${errorText}`;
+        console.error('Webhook test failed:', errorMessage);
+        setLastWebhookError(errorMessage);
         return false;
       }
     } catch (error) {
-      console.error('Webhook connection test failed with error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Network connection failed';
+      console.error('Webhook connection test failed:', errorMessage);
+      setLastWebhookError(errorMessage);
       return false;
     }
   };
@@ -378,9 +384,11 @@ const ProactiveAIConcierge = () => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Webhook error response:', errorText);
+        const errorMessage = `Status ${response.status}: ${errorText}`;
+        console.error('Webhook error response:', errorMessage);
         setWebhookStatus('failed');
-        throw new Error(`Webhook failed: ${response.status} - ${errorText}`);
+        setLastWebhookError(errorMessage);
+        throw new Error(`Webhook failed: ${errorMessage}`);
       }
 
       const result = await response.json();
@@ -391,10 +399,12 @@ const ProactiveAIConcierge = () => {
       
       if (aiResponse) {
         setWebhookStatus('working');
+        setLastWebhookError('');
         addMessage('assistant', aiResponse);
       } else {
         console.warn('No AI response found in webhook result:', result);
         setWebhookStatus('failed');
+        setLastWebhookError('No AI response in webhook result');
         throw new Error('No AI response in webhook result');
       }
 
@@ -575,8 +585,35 @@ const ProactiveAIConcierge = () => {
       showSuggestions: true
     });
     setWebhookStatus('unknown'); // Reset webhook status
+    setLastWebhookError(''); // Clear error message
     localStorage.removeItem('galyarder_ai_conversation');
   };
+
+  // Get status display info
+  const getStatusInfo = () => {
+    switch (webhookStatus) {
+      case 'working':
+        return {
+          icon: Wifi,
+          color: 'text-green-400',
+          title: 'Connected to AI service'
+        };
+      case 'failed':
+        return {
+          icon: WifiOff,
+          color: 'text-yellow-400',
+          title: `AI service unavailable${lastWebhookError ? `: ${lastWebhookError}` : ''}`
+        };
+      default:
+        return {
+          icon: AlertCircle,
+          color: 'text-gray-400',
+          title: 'Checking AI service status...'
+        };
+    }
+  };
+
+  const statusInfo = getStatusInfo();
 
   return (
     <>
@@ -656,11 +693,9 @@ const ProactiveAIConcierge = () => {
                   <h3 className="font-semibold text-white text-xs sm:text-sm truncate">AI Interface</h3>
                   <div className="flex items-center space-x-2">
                     <p className="text-xs text-gray-400 truncate">Flagship Partner Identification System</p>
-                    {webhookStatus === 'failed' && (
-                      <div className="flex items-center text-yellow-400" title="Operating in local mode">
-                        <AlertCircle className="w-3 h-3" />
-                      </div>
-                    )}
+                    <div className="flex items-center" title={statusInfo.title}>
+                      <statusInfo.icon className={`w-3 h-3 ${statusInfo.color}`} />
+                    </div>
                   </div>
                 </div>
               </div>
