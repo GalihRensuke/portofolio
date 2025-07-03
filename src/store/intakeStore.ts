@@ -132,8 +132,13 @@ export const useIntakeStore = create<IntakeState & IntakeActions>((set, get) => 
     };
 
     try {
-      // Primary webhook - n8n automation workflow
-      const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://n8n.galyarder.com/webhook/intake';
+      // Determine which webhook to use based on environment
+      const isProduction = import.meta.env.VITE_ENVIRONMENT === 'production';
+      const webhookUrl = isProduction 
+        ? (import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook/f2b9aa71-235b-49f4-80fb-f16cb2e63913')
+        : (import.meta.env.VITE_N8N_TEST_WEBHOOK_URL || 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook-test/f2b9aa71-235b-49f4-80fb-f16cb2e63913');
+      
+      console.log(`Sending to ${isProduction ? 'production' : 'test'} webhook:`, webhookUrl);
       
       const response = await fetch(webhookUrl, {
         method: 'POST',
@@ -142,12 +147,13 @@ export const useIntakeStore = create<IntakeState & IntakeActions>((set, get) => 
           'X-Source': 'galyarder-portfolio-v4-flagship-oracle',
           'X-Priority': payload.priority,
           'X-Archetype': payload.archetype_match || 'unknown',
+          'X-Environment': isProduction ? 'production' : 'test',
         },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        throw new Error(`Webhook failed: ${response.status}`);
+        throw new Error(`Webhook failed: ${response.status} - ${response.statusText}`);
       }
 
       const result = await response.json();
