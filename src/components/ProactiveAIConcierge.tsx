@@ -255,12 +255,63 @@ const ProactiveAIConcierge = () => {
     
     setConversation(prev => ({ ...prev, isTyping: true, showSuggestions: false }));
 
-    // Simulate AI response with enhanced flagship archetype detection
-    setTimeout(() => {
-      const response = generateSystemResponse(userMessage);
-      addMessage('assistant', response);
+    try {
+      // Send user message to n8n webhook for AI processing
+      const isProduction = import.meta.env.VITE_ENVIRONMENT === 'production';
+      const webhookUrl = isProduction 
+        ? (import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook/f2b9aa71-235b-49f4-80fb-f16cb2e63913')
+        : (import.meta.env.VITE_N8N_TEST_WEBHOOK_URL || 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook-test/f2b9aa71-235b-49f4-80fb-f16cb2e63913');
+
+      console.log('Sending AI chat message to webhook:', webhookUrl);
+
+      const payload = {
+        type: 'ai_chat',
+        message: userMessage,
+        conversation_id: `chat_${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        source: 'ai_concierge',
+        session_data: {
+          messages_count: conversation.messages.length,
+          session_duration: Date.now() - (window.performance?.timing?.navigationStart || Date.now()),
+          current_page: window.location.pathname
+        }
+      };
+
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Source': 'galyarder-ai-concierge',
+          'X-Type': 'ai_chat',
+          'X-Environment': isProduction ? 'production' : 'test',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        // If webhook returns AI response, use it
+        if (result.ai_response) {
+          addMessage('assistant', result.ai_response);
+        } else {
+          // Fallback to local AI response generation
+          const localResponse = generateSystemResponse(userMessage);
+          addMessage('assistant', localResponse);
+        }
+      } else {
+        throw new Error(`Webhook failed: ${response.status}`);
+      }
+
+    } catch (error) {
+      console.error('AI chat webhook failed, using local response:', error);
+      
+      // Fallback to local AI response generation
+      const localResponse = generateSystemResponse(userMessage);
+      addMessage('assistant', localResponse);
+    } finally {
       setConversation(prev => ({ ...prev, isTyping: false }));
-    }, 1500);
+    }
   };
 
   const generateSystemResponse = (query: string): string => {

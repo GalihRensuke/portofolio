@@ -138,7 +138,8 @@ export const useIntakeStore = create<IntakeState & IntakeActions>((set, get) => 
         ? (import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook/f2b9aa71-235b-49f4-80fb-f16cb2e63913')
         : (import.meta.env.VITE_N8N_TEST_WEBHOOK_URL || 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook-test/f2b9aa71-235b-49f4-80fb-f16cb2e63913');
       
-      console.log(`Sending to ${isProduction ? 'production' : 'test'} webhook:`, webhookUrl);
+      console.log(`Sending intake to ${isProduction ? 'production' : 'test'} webhook:`, webhookUrl);
+      console.log('Payload:', payload);
       
       const response = await fetch(webhookUrl, {
         method: 'POST',
@@ -148,15 +149,21 @@ export const useIntakeStore = create<IntakeState & IntakeActions>((set, get) => 
           'X-Priority': payload.priority,
           'X-Archetype': payload.archetype_match || 'unknown',
           'X-Environment': isProduction ? 'production' : 'test',
+          'X-Type': 'intake_submission',
         },
         body: JSON.stringify(payload),
       });
 
+      console.log('Webhook response status:', response.status);
+
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Webhook error response:', errorText);
         throw new Error(`Webhook failed: ${response.status} - ${response.statusText}`);
       }
 
       const result = await response.json();
+      console.log('Webhook success response:', result);
       
       // Handle response from n8n workflow
       if (result.calendly_url) {
@@ -171,6 +178,7 @@ export const useIntakeStore = create<IntakeState & IntakeActions>((set, get) => 
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
+        console.log('Backup webhook sent successfully');
       } catch (backupError) {
         console.warn('Backup webhook failed:', backupError);
       }
