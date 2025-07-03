@@ -56,7 +56,7 @@ const LogoGlyph = ({ isActive, onClick, isDragging }: { isActive: boolean; onCli
           }}
         />
         
-        {/* Logo Image - Updated to use new logo */}
+        {/* Logo Image */}
         <motion.img
           src="/logo copy.png"
           alt="Galyarder Logo"
@@ -117,7 +117,7 @@ const LogoGlyph = ({ isActive, onClick, isDragging }: { isActive: boolean; onCli
         }}
       />
 
-      {/* Pulse ring animation - Updated position */}
+      {/* Pulse ring animation */}
       <motion.div
         className="absolute -inset-1 border-2 border-indigo-400/50 rounded-xl"
         animate={{
@@ -154,7 +154,7 @@ const ProactiveAIConcierge = () => {
   const [conversation, setConversation] = useState<ConversationState>({
     messages: [],
     isTyping: false,
-    showSuggestions: true
+    showSuggestions: false
   });
 
   const dragControls = useDragControls();
@@ -162,6 +162,36 @@ const ProactiveAIConcierge = () => {
   
   // Use the proactive AI trigger hook
   const { currentMessage, clearCurrentMessage } = useProactiveAITrigger();
+
+  // Load conversation from localStorage on mount
+  useEffect(() => {
+    const savedConversation = localStorage.getItem('galyarder_ai_conversation');
+    if (savedConversation) {
+      try {
+        const parsed = JSON.parse(savedConversation);
+        setConversation({
+          messages: parsed.messages.map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          })),
+          isTyping: false,
+          showSuggestions: parsed.messages.length === 0
+        });
+      } catch (error) {
+        console.error('Failed to load conversation:', error);
+      }
+    }
+  }, []);
+
+  // Save conversation to localStorage whenever it changes
+  useEffect(() => {
+    if (conversation.messages.length > 0) {
+      localStorage.setItem('galyarder_ai_conversation', JSON.stringify({
+        messages: conversation.messages,
+        lastUpdated: new Date().toISOString()
+      }));
+    }
+  }, [conversation.messages]);
 
   // Initialize position based on screen size
   useEffect(() => {
@@ -189,8 +219,10 @@ const ProactiveAIConcierge = () => {
     }
   }, [currentMessage, isOpen]);
 
-  // Proactive triggers for exit intent and inactivity
+  // Only trigger proactively if no conversation exists
   useEffect(() => {
+    if (conversation.messages.length > 0) return; // Don't trigger if conversation exists
+
     let inactivityTimer: NodeJS.Timeout;
     let exitIntentListener: (e: MouseEvent) => void;
 
@@ -242,7 +274,7 @@ const ProactiveAIConcierge = () => {
     setConversation(prev => ({
       ...prev,
       messages: [...prev.messages, message],
-      showSuggestions: type === 'assistant'
+      showSuggestions: type === 'assistant' && prev.messages.length === 0 // Only show suggestions for first assistant message
     }));
   };
 
@@ -270,6 +302,7 @@ const ProactiveAIConcierge = () => {
         conversation_id: `chat_${Date.now()}`,
         timestamp: new Date().toISOString(),
         source: 'ai_concierge',
+        conversation_history: conversation.messages.slice(-5), // Send last 5 messages for context
         session_data: {
           messages_count: conversation.messages.length,
           session_duration: Date.now() - (window.performance?.timing?.navigationStart || Date.now()),
@@ -288,18 +321,26 @@ const ProactiveAIConcierge = () => {
         body: JSON.stringify(payload),
       });
 
+      console.log('Webhook response status:', response.status);
+
       if (response.ok) {
         const result = await response.json();
+        console.log('Webhook response:', result);
         
-        // If webhook returns AI response, use it
-        if (result.ai_response) {
-          addMessage('assistant', result.ai_response);
+        // Check for AI response in various possible fields
+        const aiResponse = result.ai_response || result.response || result.message || result.output;
+        
+        if (aiResponse) {
+          addMessage('assistant', aiResponse);
         } else {
+          console.warn('No AI response found in webhook result:', result);
           // Fallback to local AI response generation
           const localResponse = generateSystemResponse(userMessage);
           addMessage('assistant', localResponse);
         }
       } else {
+        const errorText = await response.text();
+        console.error('Webhook error:', errorText);
         throw new Error(`Webhook failed: ${response.status}`);
       }
 
@@ -466,6 +507,16 @@ const ProactiveAIConcierge = () => {
 
   const chatDimensions = getChatDimensions();
 
+  // Clear conversation function
+  const clearConversation = () => {
+    setConversation({
+      messages: [],
+      isTyping: false,
+      showSuggestions: true
+    });
+    localStorage.removeItem('galyarder_ai_conversation');
+  };
+
   return (
     <>
       {/* Viewport constraints for dragging */}
@@ -545,12 +596,23 @@ const ProactiveAIConcierge = () => {
                   <p className="text-xs text-gray-400 truncate">Flagship Partner Identification System</p>
                 </div>
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-gray-700/50 flex-shrink-0 touch-manipulation"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <div className="flex items-center space-x-2">
+                {conversation.messages.length > 0 && (
+                  <button
+                    onClick={clearConversation}
+                    className="text-gray-400 hover:text-white transition-colors p-1 rounded text-xs"
+                    title="Clear conversation"
+                  >
+                    Clear
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-gray-700/50 flex-shrink-0 touch-manipulation"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </div>
 
             {/* Messages - Mobile optimized scrolling */}
@@ -612,8 +674,8 @@ const ProactiveAIConcierge = () => {
                 </div>
               )}
 
-              {/* Professional Suggestions - Mobile optimized */}
-              {conversation.showSuggestions && conversation.messages.length > 0 && (
+              {/* Professional Suggestions - Only show for first interaction */}
+              {conversation.showSuggestions && conversation.messages.length === 1 && (
                 <div className="space-y-2 sm:space-y-3 pt-2">
                   <p className="text-xs text-gray-400 flex items-center font-medium">
                     <Terminal className="w-3 h-3 mr-2" />
@@ -644,7 +706,7 @@ const ProactiveAIConcierge = () => {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSend()}
                   placeholder="Describe your automation challenge..."
-                  className="flex-1 px-3 py-2 sm:px-4 sm:py-3 bg-gray-700/80 border border-gray-600/50 rounde-lg text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none text-xs sm:text-sm shadow-inner touch-manipulation"
+                  className="flex-1 px-3 py-2 sm:px-4 sm:py-3 bg-gray-700/80 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none text-xs sm:text-sm shadow-inner touch-manipulation"
                 />
                 <motion.button
                   whileHover={{ scale: 1.05 }}
