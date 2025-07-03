@@ -282,20 +282,20 @@ const ProactiveAIConcierge = () => {
 
   const testWebhookConnection = async (webhookUrl: string): Promise<boolean> => {
     try {
+      // Simple test payload that n8n can easily handle
       const testPayload = {
-        type: 'connection_test',
-        timestamp: new Date().toISOString(),
-        source: 'ai_concierge_test'
+        test: true,
+        message: "connection_test",
+        timestamp: new Date().toISOString()
       };
 
       console.log('Testing webhook connection to:', webhookUrl);
+      console.log('Test payload:', testPayload);
 
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Source': 'galyarder-ai-concierge',
-          'X-Type': 'connection_test',
         },
         body: JSON.stringify(testPayload),
       });
@@ -352,64 +352,65 @@ const ProactiveAIConcierge = () => {
         }
       }
 
+      // Simplified payload structure that n8n can easily parse
       const payload = {
-        type: 'ai_chat',
         message: userMessage,
-        conversation_id: `chat_${Date.now()}`,
+        type: 'ai_chat',
         timestamp: new Date().toISOString(),
-        source: 'ai_concierge',
-        conversation_history: conversation.messages.slice(-5), // Send last 5 messages for context
-        session_data: {
+        conversation_history: conversation.messages.slice(-3).map(msg => ({
+          role: msg.type === 'user' ? 'user' : 'assistant',
+          content: msg.content
+        })),
+        session_info: {
           messages_count: conversation.messages.length,
-          session_duration: Date.now() - (window.performance?.timing?.navigationStart || Date.now()),
-          current_page: window.location.pathname
+          current_page: window.location.pathname,
+          user_agent: navigator.userAgent
         }
       };
 
-      console.log('Sending AI chat message to webhook:', webhookUrl);
-      console.log('Payload:', payload);
+      console.log('Sending AI chat message to n8n webhook:', webhookUrl);
+      console.log('Payload:', JSON.stringify(payload, null, 2));
 
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Source': 'galyarder-ai-concierge',
-          'X-Type': 'ai_chat',
-          'X-Environment': isDevelopment ? 'development' : 'production',
         },
         body: JSON.stringify(payload),
       });
 
-      console.log('Webhook response status:', response.status);
+      console.log('n8n webhook response status:', response.status);
+      console.log('n8n webhook response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
         const errorText = await response.text();
-        const errorMessage = `Status ${response.status}: ${errorText}`;
-        console.error('Webhook error response:', errorMessage);
+        console.error('n8n webhook error response:', errorText);
         setWebhookStatus('failed');
-        setLastWebhookError(errorMessage);
-        throw new Error(`Webhook failed: ${errorMessage}`);
+        setLastWebhookError(`Status ${response.status}: ${errorText}`);
+        throw new Error(`n8n webhook failed: ${response.status} - ${errorText}`);
       }
 
       const result = await response.json();
-      console.log('Webhook response:', result);
+      console.log('n8n webhook success response:', result);
       
-      // Check for AI response in various possible fields
-      const aiResponse = result.ai_response || result.response || result.message || result.output;
+      // Check for AI response in various possible fields from n8n
+      const aiResponse = result.response || result.ai_response || result.message || result.output || result.data?.response;
       
-      if (aiResponse) {
+      if (aiResponse && typeof aiResponse === 'string') {
         setWebhookStatus('working');
         setLastWebhookError('');
         addMessage('assistant', aiResponse);
+        console.log('Successfully received AI response from n8n:', aiResponse);
       } else {
-        console.warn('No AI response found in webhook result:', result);
+        console.warn('No valid AI response found in n8n result:', result);
+        console.warn('Expected string response, got:', typeof aiResponse, aiResponse);
         setWebhookStatus('failed');
-        setLastWebhookError('No AI response in webhook result');
-        throw new Error('No AI response in webhook result');
+        setLastWebhookError('No valid AI response in n8n result');
+        throw new Error('No valid AI response in n8n result');
       }
 
     } catch (error) {
-      console.error('AI chat webhook failed, using local response:', error);
+      console.error('n8n AI chat webhook failed, using local response:', error);
       setWebhookStatus('failed');
       
       // Add system message about fallback mode on first failure

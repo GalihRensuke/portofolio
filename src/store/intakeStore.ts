@@ -97,15 +97,15 @@ export const useIntakeStore = create<IntakeState & IntakeActions>((set, get) => 
     const isHighValue = state.budget === '15k_plus' && state.timeline === 'immediate';
     const isQualified = state.budget !== 'under_5k' || state.intent === 'advisory';
     
-    // Prepare comprehensive payload for n8n webhook
+    // Prepare comprehensive payload for n8n webhook - SIMPLIFIED STRUCTURE
     const payload = {
       // Core intake data
       intent: state.intent,
       budget: state.budget,
       timeline: state.timeline,
       domain: state.domain === 'other' ? state.customDomain : state.domain,
-      projectDescription: state.projectDescription,
-      contactInfo: state.contactInfo,
+      project_description: state.projectDescription,
+      contact_info: state.contactInfo,
       
       // FLAGSHIP MANDATE METADATA - Enhanced
       flagship_candidate: isFlagshipCandidate,
@@ -118,15 +118,6 @@ export const useIntakeStore = create<IntakeState & IntakeActions>((set, get) => 
       timestamp: new Date().toISOString(),
       source: 'portfolio_v4_flagship_oracle',
       
-      // UTM tracking data
-      utm_source: urlParams.get('utm_source'),
-      utm_campaign: urlParams.get('utm_campaign'),
-      utm_medium: urlParams.get('utm_medium'),
-      
-      // Behavioral data from user behavior store
-      session_duration: Date.now() - (window.performance?.timing?.navigationStart || Date.now()),
-      page_views: sessionStorage.getItem('galyarder_page_views') || '1',
-      
       // Lead scoring
       lead_score: calculateLeadScore(state),
     };
@@ -138,32 +129,28 @@ export const useIntakeStore = create<IntakeState & IntakeActions>((set, get) => 
         ? (import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook/f2b9aa71-235b-49f4-80fb-f16cb2e63913')
         : (import.meta.env.VITE_N8N_TEST_WEBHOOK_URL || 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook-test/f2b9aa71-235b-49f4-80fb-f16cb2e63913');
       
-      console.log(`Sending intake to ${isProduction ? 'production' : 'test'} webhook:`, webhookUrl);
-      console.log('Payload:', payload);
+      console.log(`Sending intake to ${isProduction ? 'production' : 'test'} n8n webhook:`, webhookUrl);
+      console.log('Intake payload:', JSON.stringify(payload, null, 2));
       
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Source': 'galyarder-portfolio-v4-flagship-oracle',
-          'X-Priority': payload.priority,
-          'X-Archetype': payload.archetype_match || 'unknown',
-          'X-Environment': isProduction ? 'production' : 'test',
-          'X-Type': 'intake_submission',
         },
         body: JSON.stringify(payload),
       });
 
-      console.log('Webhook response status:', response.status);
+      console.log('n8n intake webhook response status:', response.status);
+      console.log('n8n intake webhook response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Webhook error response:', errorText);
-        throw new Error(`Webhook failed: ${response.status} - ${response.statusText}`);
+        console.error('n8n intake webhook error response:', errorText);
+        throw new Error(`n8n webhook failed: ${response.status} - ${response.statusText}`);
       }
 
       const result = await response.json();
-      console.log('Webhook success response:', result);
+      console.log('n8n intake webhook success response:', result);
       
       // Handle response from n8n workflow
       if (result.calendly_url) {
@@ -207,7 +194,7 @@ export const useIntakeStore = create<IntakeState & IntakeActions>((set, get) => 
       }
 
     } catch (error) {
-      console.error('Intake submission failed:', error);
+      console.error('n8n intake submission failed:', error);
       
       // Fallback: Store locally and show manual contact
       localStorage.setItem('galyarder_failed_intake', JSON.stringify({
