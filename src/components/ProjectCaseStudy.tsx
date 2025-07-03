@@ -1,0 +1,441 @@
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { ExternalLink, Github, ArrowRight, BarChart3, Zap, Target, Info, Calendar, TrendingUp, Users, Quote } from 'lucide-react';
+import { ProjectMetrics } from '../lib/supabase';
+import MetricDetailModal from './MetricDetailModal';
+import { getTestimonialsByProject } from '../data/testimonials';
+
+interface ProjectCaseStudyProps {
+  project: ProjectMetrics;
+  index: number;
+  showMetrics?: boolean;
+  emphasizeTechnical?: boolean;
+}
+
+interface MetricDetailContent {
+  title: string;
+  description: string;
+  details: Array<{
+    label: string;
+    value: string;
+    icon?: React.ComponentType<{ className?: string }>;
+  }>;
+  projectContext?: string;
+  verificationLevel?: 'verified' | 'calculated' | 'estimated';
+}
+
+const ProjectCaseStudy: React.FC<ProjectCaseStudyProps> = ({ 
+  project, 
+  index, 
+  showMetrics = true, 
+  emphasizeTechnical = true 
+}) => {
+  const [showDetails, setShowDetails] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalContent, setModalContent] = useState<MetricDetailContent | null>(null);
+
+  // Get testimonials for this project
+  const projectTestimonials = getTestimonialsByProject(project.id);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'production': return 'text-green-400 bg-green-400/10 border-green-400/20';
+      case 'development': return 'text-blue-400 bg-blue-400/10 border-blue-400/20';
+      case 'research': return 'text-purple-400 bg-purple-400/10 border-purple-400/20';
+      default: return 'text-gray-400 bg-gray-400/10 border-gray-400/20';
+    }
+  };
+
+  const handleMetricClick = (metricKey: string, metricValue: string) => {
+    let content: MetricDetailContent;
+
+    // Generate detailed content based on project and metric
+    switch (project.id) {
+      case 'airdropops':
+        content = getAirdropOpsMetricDetails(metricKey, metricValue);
+        break;
+      case 'galyarderos':
+        content = getGalyarderOSMetricDetails(metricKey, metricValue);
+        break;
+      case 'prompt-codex':
+        content = getPromptCodexMetricDetails(metricKey, metricValue);
+        break;
+      default:
+        content = getGenericMetricDetails(metricKey, metricValue, project);
+    }
+
+    setModalContent(content);
+    setIsModalOpen(true);
+  };
+
+  const getAirdropOpsMetricDetails = (metricKey: string, metricValue: string): MetricDetailContent => {
+    switch (metricKey) {
+      case 'roi':
+        return {
+          title: 'ROI Improvement - AirdropOps',
+          description: 'Quantified return on investment improvement through intelligent automation of Web3 opportunity capture and risk management.',
+          details: [
+            {
+              label: 'Baseline Measurement',
+              value: 'Manual opportunity screening: 2-3 hours per opportunity, 60% accuracy rate',
+              icon: BarChart3
+            },
+            {
+              label: 'Automated Performance',
+              value: 'LLM-powered analysis: 30 seconds per opportunity, 92% accuracy rate',
+              icon: Zap
+            },
+            {
+              label: 'Time Savings',
+              value: '95% reduction in manual screening time (2.5 hours → 7 minutes per opportunity)',
+              icon: Calendar
+            },
+            {
+              label: 'Quality Improvement',
+              value: '53% increase in accuracy (60% → 92%) through systematic LLM analysis',
+              icon: TrendingUp
+            },
+            {
+              label: 'Volume Scaling',
+              value: 'Increased processing capacity from 10 to 500+ opportunities per day',
+              icon: Users
+            }
+          ],
+          projectContext: 'AirdropOps demonstrates the Operational Automation Core archetype by eliminating high-volume manual work through robust, scalable automation.',
+          verificationLevel: 'verified'
+        };
+      case 'transactions_processed':
+        return {
+          title: 'Transaction Processing Volume',
+          description: 'Total opportunities analyzed and processed through the automated pipeline since deployment.',
+          details: [
+            {
+              label: 'Processing Pipeline',
+              value: 'Telegram monitoring → LLM analysis → Risk assessment → Execution decision',
+              icon: Zap
+            },
+            {
+              label: 'Data Sources',
+              value: 'Multiple Telegram channels, Discord servers, and Web3 announcement feeds',
+              icon: Target
+            },
+            {
+              label: 'Quality Assurance',
+              value: 'Multi-stage validation with circuit breaker patterns and manual override capabilities',
+              icon: BarChart3
+            },
+            {
+              label: 'Success Rate',
+              value: '92% accuracy in opportunity classification and risk assessment',
+              icon: TrendingUp
+            }
+          ],
+          projectContext: 'High-volume processing demonstrates system reliability and scalability under real-world conditions.',
+          verificationLevel: 'verified'
+        };
+      default:
+        return getGenericMetricDetails(metricKey, metricValue, project);
+    }
+  };
+
+  const getGalyarderOSMetricDetails = (metricKey: string, metricValue: string): MetricDetailContent => {
+    switch (metricKey) {
+      case 'efficiency_gain':
+        return {
+          title: 'Decision Fatigue Reduction - GalyarderOS',
+          description: 'Measured reduction in daily decision overhead through unified system architecture and intelligent automation.',
+          details: [
+            {
+              label: 'Measurement Method',
+              value: 'Daily decision tracking over 90-day period before/after implementation',
+              icon: BarChart3
+            },
+            {
+              label: 'Baseline Metrics',
+              value: 'Average 247 micro-decisions per day across routine management, task prioritization, and workflow coordination',
+              icon: Calendar
+            },
+            {
+              label: 'Post-Implementation',
+              value: '37 conscious decisions per day, with 210 decisions automated through intelligent routing',
+              icon: Zap
+            },
+            {
+              label: 'Cognitive Load',
+              value: 'Reduced mental overhead allows focus on high-value architectural and strategic work',
+              icon: TrendingUp
+            }
+          ],
+          projectContext: 'GalyarderOS exemplifies the Enterprise AI Brain archetype by transforming disorganized personal workflows into an intelligent, queryable system.',
+          verificationLevel: 'calculated'
+        };
+      case 'time_saved':
+        return {
+          title: 'Daily Time Savings',
+          description: 'Quantified time recovery through automation of routine tasks and intelligent workflow orchestration.',
+          details: [
+            {
+              label: 'Automation Categories',
+              value: 'Routine scheduling, financial tracking, task prioritization, communication routing',
+              icon: Target
+            },
+            {
+              label: 'Time Tracking',
+              value: 'Automated logging of task completion times and workflow efficiency metrics',
+              icon: Calendar
+            },
+            {
+              label: 'Compound Benefits',
+              value: 'Time savings compound as system learns patterns and optimizes workflows',
+              icon: TrendingUp
+            },
+            {
+              label: 'Quality Improvement',
+              value: 'Reduced errors and improved consistency in routine operations',
+              icon: BarChart3
+            }
+          ],
+          projectContext: 'Time savings enable focus on high-impact architectural work and strategic system design.',
+          verificationLevel: 'verified'
+        };
+      default:
+        return getGenericMetricDetails(metricKey, metricValue, project);
+    }
+  };
+
+  const getPromptCodexMetricDetails = (metricKey: string, metricValue: string): MetricDetailContent => {
+    switch (metricKey) {
+      case 'efficiency_gain':
+        return {
+          title: 'AI Workflow Development Acceleration',
+          description: 'Measured improvement in AI workflow creation speed through DSL-based prompt composition and template inheritance.',
+          details: [
+            {
+              label: 'Baseline Process',
+              value: 'Manual prompt crafting: 2-3 hours per complex workflow, high variability in output quality',
+              icon: Calendar
+            },
+            {
+              label: 'Template System',
+              value: 'DSL composition: 30-45 minutes per workflow with consistent, validated output patterns',
+              icon: Zap
+            },
+            {
+              label: 'Quality Consistency',
+              value: '85% improvement in output consistency through structured template inheritance',
+              icon: TrendingUp
+            },
+            {
+              label: 'Reusability Factor',
+              value: 'Template components can be reused across multiple workflows, compounding efficiency gains',
+              icon: Target
+            }
+          ],
+          projectContext: 'Prompt Codex demonstrates systematic AI engineering, moving beyond ad-hoc prompt creation to structured, scalable workflow development.',
+          verificationLevel: 'calculated'
+        };
+      default:
+        return getGenericMetricDetails(metricKey, metricValue, project);
+    }
+  };
+
+  const getGenericMetricDetails = (metricKey: string, metricValue: string, project: ProjectMetrics): MetricDetailContent => {
+    return {
+      title: `${metricKey.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} - ${project.project_name}`,
+      description: `Performance metric for ${project.project_name} demonstrating quantified impact and system effectiveness.`,
+      details: [
+        {
+          label: 'Metric Value',
+          value: metricValue,
+          icon: BarChart3
+        },
+        {
+          label: 'Project Context',
+          value: project.objective,
+          icon: Target
+        },
+        {
+          label: 'System Architecture',
+          value: project.system_architecture.substring(0, 100) + '...',
+          icon: Zap
+        },
+        {
+          label: 'Verification Status',
+          value: 'Tracked through automated monitoring and validated against project outcomes',
+          icon: TrendingUp
+        }
+      ],
+      projectContext: `This metric reflects the effectiveness of ${project.project_name} in achieving its stated objectives through systematic implementation.`,
+      verificationLevel: 'calculated'
+    };
+  };
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: index * 0.1 }}
+        className="group border border-gray-200 dark:border-gray-800 rounded-lg p-6 hover:border-indigo-500 dark:hover:border-indigo-500 transition-all duration-300 hover:shadow-xl"
+      >
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h3 className="text-xl font-bold mb-2 text-indigo-400 group-hover:text-indigo-300 transition-colors">
+              {project.project_name}
+            </h3>
+            <span className={`px-2 py-1 text-xs rounded-full border font-medium ${getStatusColor(project.status)}`}>
+              {project.status.toUpperCase()}
+            </span>
+          </div>
+          
+          <div className="flex space-x-2">
+            <Github className="h-5 w-5 text-gray-400 hover:text-indigo-400 cursor-pointer transition-colors" />
+            <ExternalLink className="h-5 w-5 text-gray-400 hover:text-indigo-400 cursor-pointer transition-colors" />
+          </div>
+        </div>
+
+        {/* Objective */}
+        <div className="mb-4">
+          <div className="flex items-center mb-2">
+            <Target className="h-4 w-4 text-indigo-400 mr-2" />
+            <span className="text-sm font-semibold text-gray-300">Objective</span>
+          </div>
+          <p className="text-gray-300 text-sm leading-relaxed">{project.objective}</p>
+        </div>
+
+        {/* Key Metrics - Conditional based on persona */}
+        {showMetrics && (
+          <div className="mb-4">
+            <div className="flex items-center mb-2">
+              <BarChart3 className="h-4 w-4 text-green-400 mr-2" />
+              <span className="text-sm font-semibold text-gray-300">Impact</span>
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              {Object.entries(project.metrics).map(([key, value]) => (
+                <div key={key} className="flex justify-between items-center text-sm">
+                  <span className="text-gray-400 capitalize">{key.replace('_', ' ')}</span>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-green-400 font-medium">{value}</span>
+                    <button
+                      onClick={() => handleMetricClick(key, value)}
+                      className="text-gray-400 hover:text-indigo-400 transition-colors p-1 rounded hover:bg-gray-800"
+                      title="View metric details"
+                    >
+                      <Info className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Client Testimonials - NEW SECTION */}
+        {projectTestimonials.length > 0 && (
+          <div className="mb-4">
+            <div className="flex items-center mb-3">
+              <Users className="h-4 w-4 text-purple-400 mr-2" />
+              <span className="text-sm font-semibold text-gray-300">What Clients Say</span>
+            </div>
+            <div className="space-y-3">
+              {projectTestimonials.map((testimonial, idx) => (
+                <motion.div
+                  key={testimonial.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.4, delay: idx * 0.1 }}
+                  className="p-3 bg-gray-800/30 border border-gray-700/50 rounded-lg"
+                >
+                  <div className="flex items-start space-x-2 mb-2">
+                    <Quote className="h-3 w-3 text-purple-400 mt-1 flex-shrink-0" />
+                    <p className="text-sm text-gray-300 italic leading-relaxed">
+                      "{testimonial.quote}"
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs text-gray-400">
+                      <span className="font-medium text-gray-300">{testimonial.author}</span>
+                      <span className="mx-1">•</span>
+                      <span>{testimonial.role}</span>
+                      <span className="mx-1">•</span>
+                      <span>{testimonial.company}</span>
+                    </div>
+                    {testimonial.impact && (
+                      <div className="text-xs text-purple-400 font-medium">
+                        {testimonial.impact}
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tech Stack - Emphasized for developers */}
+        <div className={`mb-4 ${emphasizeTechnical ? 'order-first' : ''}`}>
+          <div className="flex flex-wrap gap-2">
+            {project.tech_stack.map((tech) => (
+              <span
+                key={tech}
+                className={`px-2 py-1 text-xs rounded border ${
+                  emphasizeTechnical 
+                    ? 'bg-indigo-900/30 text-indigo-300 border-indigo-700' 
+                    : 'bg-gray-800 text-gray-300 border-gray-700'
+                }`}
+              >
+                {tech}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Expandable Details */}
+        <button
+          onClick={() => setShowDetails(!showDetails)}
+          className="flex items-center text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
+        >
+          <Zap className="h-4 w-4 mr-1" />
+          System Architecture
+          <ArrowRight className={`h-3 w-3 ml-1 transition-transform ${showDetails ? 'rotate-90' : ''}`} />
+        </button>
+
+        <motion.div
+          initial={false}
+          animate={{ height: showDetails ? 'auto' : 0, opacity: showDetails ? 1 : 0 }}
+          transition={{ duration: 0.3 }}
+          className="overflow-hidden"
+        >
+          <div className="pt-3 border-t border-gray-700 mt-3">
+            <p className="text-sm text-gray-300 leading-relaxed mb-3">
+              {project.system_architecture}
+            </p>
+            {project.visual_flow && (
+              <div className="bg-gray-800 p-3 rounded border border-gray-700">
+                <div className="text-xs text-gray-400 mb-1">Data Flow</div>
+                <div className="text-sm text-indigo-300 font-mono">
+                  {project.visual_flow}
+                </div>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </motion.div>
+
+      {/* Metric Detail Modal */}
+      {modalContent && (
+        <MetricDetailModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          title={modalContent.title}
+          description={modalContent.description}
+          details={modalContent.details}
+          projectContext={modalContent.projectContext}
+          verificationLevel={modalContent.verificationLevel}
+        />
+      )}
+    </>
+  );
+};
+
+export default ProjectCaseStudy;
