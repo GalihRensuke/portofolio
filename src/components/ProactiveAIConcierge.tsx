@@ -287,6 +287,8 @@ const ProactiveAIConcierge = () => {
         source: 'ai_concierge_test'
       };
 
+      console.log('Testing webhook connection to:', webhookUrl);
+
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
@@ -297,9 +299,18 @@ const ProactiveAIConcierge = () => {
         body: JSON.stringify(testPayload),
       });
 
-      return response.ok;
+      console.log('Webhook test response status:', response.status);
+      
+      if (response.ok) {
+        console.log('Webhook connection test successful');
+        return true;
+      } else {
+        const errorText = await response.text();
+        console.error('Webhook test failed with status:', response.status, 'Response:', errorText);
+        return false;
+      }
     } catch (error) {
-      console.error('Webhook connection test failed:', error);
+      console.error('Webhook connection test failed with error:', error);
       return false;
     }
   };
@@ -315,12 +326,13 @@ const ProactiveAIConcierge = () => {
 
     try {
       // Determine webhook URL based on environment
-      const isProduction = import.meta.env.VITE_ENVIRONMENT === 'production';
-      const webhookUrl = isProduction 
-        ? (import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook/f2b9aa71-235b-49f4-80fb-f16cb2e63913')
-        : (import.meta.env.VITE_N8N_TEST_WEBHOOK_URL || 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook-test/f2b9aa71-235b-49f4-80fb-f16cb2e63913');
+      const isDevelopment = import.meta.env.VITE_ENVIRONMENT === 'development' || import.meta.env.DEV;
+      const webhookUrl = isDevelopment 
+        ? (import.meta.env.VITE_N8N_TEST_WEBHOOK_URL || 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook-test/f2b9aa71-235b-49f4-80fb-f16cb2e63913')
+        : (import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook/f2b9aa71-235b-49f4-80fb-f16cb2e63913');
 
-      console.log('Sending AI chat message to webhook:', webhookUrl);
+      console.log('Environment:', isDevelopment ? 'development' : 'production');
+      console.log('Using webhook URL:', webhookUrl);
 
       // Test webhook connection first if status is unknown or failed
       if (webhookStatus !== 'working') {
@@ -348,13 +360,16 @@ const ProactiveAIConcierge = () => {
         }
       };
 
+      console.log('Sending AI chat message to webhook:', webhookUrl);
+      console.log('Payload:', payload);
+
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-Source': 'galyarder-ai-concierge',
           'X-Type': 'ai_chat',
-          'X-Environment': isProduction ? 'production' : 'test',
+          'X-Environment': isDevelopment ? 'development' : 'production',
         },
         body: JSON.stringify(payload),
       });
@@ -773,7 +788,7 @@ const ProactiveAIConcierge = () => {
                   className="px-3 py-2 sm:px-4 sm:py-3 bg-indigo-500 hover:bg-indigo-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors shadow-lg hover:shadow-xl touch-manipulation"
                 >
                   <Send className="h-3 w-3 sm:h-4 sm:w-4" />
-                </motion.button>
+                </button>
               </div>
             </div>
           </motion.div>
