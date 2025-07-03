@@ -788,7 +788,7 @@ const ProactiveAIConcierge = () => {
                   className="px-3 py-2 sm:px-4 sm:py-3 bg-indigo-500 hover:bg-indigo-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors shadow-lg hover:shadow-xl touch-manipulation"
                 >
                   <Send className="h-3 w-3 sm:h-4 sm:w-4" />
-                </button>
+                </motion.button>
               </div>
             </div>
           </motion.div>
