@@ -146,6 +146,80 @@ const LogoGlyph = ({ isActive, onClick, isDragging }: { isActive: boolean; onCli
   );
 };
 
+// CORS proxy function for development
+const sendMessageToWebhook = async (message: string, sessionId: string, userName: string = 'Portfolio Visitor') => {
+  const payload = {
+    message,
+    timestamp: new Date().toISOString(),
+    sessionId,
+    userName
+  };
+
+  // Determine webhook URL based on environment
+  const isDevelopment = import.meta.env.VITE_ENVIRONMENT === 'development' || import.meta.env.DEV;
+  const baseWebhookUrl = isDevelopment 
+    ? 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook-test/b653569b-761b-40ad-870e-1cc3c12e8bd2'
+    : 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook/b653569b-761b-40ad-870e-1cc3c12e8bd2';
+
+  // CORS Proxy for development environment
+  const corsProxy = 'https://cors-anywhere.herokuapp.com/';
+  const webhookUrl = isDevelopment ? corsProxy + baseWebhookUrl : baseWebhookUrl;
+
+  console.log('🚀 Sending message to Galyarder AI interface...');
+  console.log('Environment:', isDevelopment ? 'development' : 'production');
+  console.log('Using CORS proxy:', isDevelopment);
+  console.log('Final URL:', webhookUrl);
+  console.log('📤 Payload:', JSON.stringify(payload, null, 2));
+
+  try {
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    console.log('📥 Response status:', response.status);
+    console.log('📥 Response headers:', Object.fromEntries(response.headers.entries()));
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Webhook error response:', errorText);
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    console.log('✅ Webhook success response:', result);
+    
+    // Extract AI response from n8n result
+    const aiResponse = result.response || result.message || result.output || result.data?.response;
+    
+    if (aiResponse && typeof aiResponse === 'string') {
+      console.log('🤖 Galyarder AI response:', aiResponse);
+      return aiResponse;
+    } else {
+      console.warn('⚠️ No valid AI response found in webhook result:', result);
+      throw new Error('No valid AI response in webhook result');
+    }
+
+  } catch (error) {
+    console.error('❌ Failed to connect to Galyarder AI interface:', error);
+    
+    // Enhanced error handling for CORS and network issues
+    let errorMessage = 'Connection failed';
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      errorMessage = 'CORS or network error - using proxy to bypass restrictions';
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    
+    throw new Error(errorMessage);
+  }
+};
+
 const ProactiveAIConcierge = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
@@ -291,79 +365,16 @@ const ProactiveAIConcierge = () => {
     setConversation(prev => ({ ...prev, isTyping: true, showSuggestions: false }));
 
     try {
-      // Determine webhook URL based on environment
-      const isDevelopment = import.meta.env.VITE_ENVIRONMENT === 'development' || import.meta.env.DEV;
-      const webhookUrl = isDevelopment 
-        ? 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook-test/b653569b-761b-40ad-870e-1cc3c12e8bd2'
-        : 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook/b653569b-761b-40ad-870e-1cc3c12e8bd2';
-
-      console.log('🚀 Sending message to Galyarder AI interface...');
-      console.log('Environment:', isDevelopment ? 'development' : 'production');
-      console.log('Webhook URL:', webhookUrl);
-
-      // Prepare payload for n8n webhook
-      const payload = {
-        message: userMessage,
-        timestamp: new Date().toISOString(),
-        sessionId: sessionId,
-        userName: 'Portfolio Visitor'
-      };
-
-      console.log('📤 Payload:', JSON.stringify(payload, null, 2));
-
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        mode: 'cors', // Enable CORS
-        body: JSON.stringify(payload),
-      });
-
-      console.log('📥 Response status:', response.status);
-      console.log('📥 Response headers:', Object.fromEntries(response.headers.entries()));
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Webhook error response:', errorText);
-        setWebhookStatus('failed');
-        setLastWebhookError(`HTTP ${response.status}: ${response.statusText}`);
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      console.log('✅ Webhook success response:', result);
-      
-      // Extract AI response from n8n result
-      const aiResponse = result.response || result.message || result.output || result.data?.response;
-      
-      if (aiResponse && typeof aiResponse === 'string') {
-        setWebhookStatus('working');
-        setLastWebhookError('');
-        addMessage('assistant', aiResponse);
-        console.log('🤖 Galyarder AI response:', aiResponse);
-      } else {
-        console.warn('⚠️ No valid AI response found in webhook result:', result);
-        setWebhookStatus('failed');
-        setLastWebhookError('No valid AI response in webhook result');
-        throw new Error('No valid AI response in webhook result');
-      }
-
+      const aiResponse = await sendMessageToWebhook(userMessage, sessionId);
+      setWebhookStatus('working');
+      setLastWebhookError('');
+      addMessage('assistant', aiResponse);
     } catch (error) {
       console.error('❌ Failed to connect to Galyarder AI interface:', error);
       
-      // Enhanced error handling for CORS and network issues
-      let errorMessage = 'Connection failed';
-      if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        errorMessage = 'CORS or network error - check webhook URL and CORS settings';
-        setLastWebhookError('CORS or network connectivity issue');
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-        setLastWebhookError(error.message);
-      }
-      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       setWebhookStatus('failed');
+      setLastWebhookError(errorMessage);
       
       // Show error message instead of fallback
       addMessage('system', `Unable to connect to Galyarder's AI interface: ${errorMessage}. Please try again or contact directly via the methods in the Contact page.`);
