@@ -153,6 +153,7 @@ const ProactiveAIConcierge = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [webhookStatus, setWebhookStatus] = useState<'unknown' | 'working' | 'failed'>('unknown');
   const [lastWebhookError, setLastWebhookError] = useState<string>('');
+  const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   const [conversation, setConversation] = useState<ConversationState>({
     messages: [],
     isTyping: false,
@@ -280,47 +281,6 @@ const ProactiveAIConcierge = () => {
     }));
   };
 
-  const testWebhookConnection = async (webhookUrl: string): Promise<boolean> => {
-    try {
-      // Simple test payload that n8n can easily handle
-      const testPayload = {
-        test: true,
-        message: "connection_test",
-        timestamp: new Date().toISOString()
-      };
-
-      console.log('Testing webhook connection to:', webhookUrl);
-      console.log('Test payload:', testPayload);
-
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(testPayload),
-      });
-
-      console.log('Webhook test response status:', response.status);
-      
-      if (response.ok) {
-        console.log('Webhook connection test successful');
-        setLastWebhookError('');
-        return true;
-      } else {
-        const errorText = await response.text();
-        const errorMessage = `Status ${response.status}: ${errorText}`;
-        console.error('Webhook test failed:', errorMessage);
-        setLastWebhookError(errorMessage);
-        return false;
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Network connection failed';
-      console.error('Webhook connection test failed:', errorMessage);
-      setLastWebhookError(errorMessage);
-      return false;
-    }
-  };
-
   const handleSend = async () => {
     if (!input.trim()) return;
 
@@ -334,157 +294,82 @@ const ProactiveAIConcierge = () => {
       // Determine webhook URL based on environment
       const isDevelopment = import.meta.env.VITE_ENVIRONMENT === 'development' || import.meta.env.DEV;
       const webhookUrl = isDevelopment 
-        ? (import.meta.env.VITE_N8N_TEST_WEBHOOK_URL || 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook-test/f2b9aa71-235b-49f4-80fb-f16cb2e63913')
-        : (import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook/f2b9aa71-235b-49f4-80fb-f16cb2e63913');
+        ? 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook-test/b653569b-761b-40ad-870e-1cc3c12e8bd2'
+        : 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook/b653569b-761b-40ad-870e-1cc3c12e8bd2';
 
+      console.log('🚀 Sending message to Galyarder AI interface...');
       console.log('Environment:', isDevelopment ? 'development' : 'production');
-      console.log('Using webhook URL:', webhookUrl);
+      console.log('Webhook URL:', webhookUrl);
 
-      // Test webhook connection first if status is unknown or failed
-      if (webhookStatus !== 'working') {
-        console.log('Testing webhook connection...');
-        const isWorking = await testWebhookConnection(webhookUrl);
-        setWebhookStatus(isWorking ? 'working' : 'failed');
-        
-        if (!isWorking) {
-          console.warn('Webhook connection test failed, using local response');
-          throw new Error('Webhook connection test failed');
-        }
-      }
-
-      // Simplified payload structure that n8n can easily parse
+      // Prepare payload for n8n webhook
       const payload = {
         message: userMessage,
-        type: 'ai_chat',
         timestamp: new Date().toISOString(),
-        conversation_history: conversation.messages.slice(-3).map(msg => ({
-          role: msg.type === 'user' ? 'user' : 'assistant',
-          content: msg.content
-        })),
-        session_info: {
-          messages_count: conversation.messages.length,
-          current_page: window.location.pathname,
-          user_agent: navigator.userAgent
-        }
+        sessionId: sessionId,
+        userName: 'Portfolio Visitor'
       };
 
-      console.log('Sending AI chat message to n8n webhook:', webhookUrl);
-      console.log('Payload:', JSON.stringify(payload, null, 2));
+      console.log('📤 Payload:', JSON.stringify(payload, null, 2));
 
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
+        mode: 'cors', // Enable CORS
         body: JSON.stringify(payload),
       });
 
-      console.log('n8n webhook response status:', response.status);
-      console.log('n8n webhook response headers:', Object.fromEntries(response.headers.entries()));
+      console.log('📥 Response status:', response.status);
+      console.log('📥 Response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('n8n webhook error response:', errorText);
+        console.error('❌ Webhook error response:', errorText);
         setWebhookStatus('failed');
-        setLastWebhookError(`Status ${response.status}: ${errorText}`);
-        throw new Error(`n8n webhook failed: ${response.status} - ${errorText}`);
+        setLastWebhookError(`HTTP ${response.status}: ${response.statusText}`);
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
       const result = await response.json();
-      console.log('n8n webhook success response:', result);
+      console.log('✅ Webhook success response:', result);
       
-      // Check for AI response in various possible fields from n8n
-      const aiResponse = result.response || result.ai_response || result.message || result.output || result.data?.response;
+      // Extract AI response from n8n result
+      const aiResponse = result.response || result.message || result.output || result.data?.response;
       
       if (aiResponse && typeof aiResponse === 'string') {
         setWebhookStatus('working');
         setLastWebhookError('');
         addMessage('assistant', aiResponse);
-        console.log('Successfully received AI response from n8n:', aiResponse);
+        console.log('🤖 Galyarder AI response:', aiResponse);
       } else {
-        console.warn('No valid AI response found in n8n result:', result);
-        console.warn('Expected string response, got:', typeof aiResponse, aiResponse);
+        console.warn('⚠️ No valid AI response found in webhook result:', result);
         setWebhookStatus('failed');
-        setLastWebhookError('No valid AI response in n8n result');
-        throw new Error('No valid AI response in n8n result');
+        setLastWebhookError('No valid AI response in webhook result');
+        throw new Error('No valid AI response in webhook result');
       }
 
     } catch (error) {
-      console.error('n8n AI chat webhook failed, using local response:', error);
-      setWebhookStatus('failed');
+      console.error('❌ Failed to connect to Galyarder AI interface:', error);
       
-      // Add system message about fallback mode on first failure
-      if (webhookStatus !== 'failed') {
-        addMessage('system', 'Note: AI system is operating in local mode. Full capabilities will be restored when the remote AI service is available.');
+      // Enhanced error handling for CORS and network issues
+      let errorMessage = 'Connection failed';
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        errorMessage = 'CORS or network error - check webhook URL and CORS settings';
+        setLastWebhookError('CORS or network connectivity issue');
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+        setLastWebhookError(error.message);
       }
       
-      // Fallback to local AI response generation
-      const localResponse = generateSystemResponse(userMessage);
-      addMessage('assistant', localResponse);
+      setWebhookStatus('failed');
+      
+      // Show error message instead of fallback
+      addMessage('system', `Unable to connect to Galyarder's AI interface: ${errorMessage}. Please try again or contact directly via the methods in the Contact page.`);
     } finally {
       setConversation(prev => ({ ...prev, isTyping: false }));
     }
-  };
-
-  const generateSystemResponse = (query: string): string => {
-    const lowerQuery = query.toLowerCase();
-    
-    // FLAGSHIP PARTNER IDENTIFICATION - Enhanced with archetype alignment
-    if (lowerQuery.includes('sales') || lowerQuery.includes('lead') || lowerQuery.includes('qualification') || lowerQuery.includes('funnel') || lowerQuery.includes('crm') || lowerQuery.includes('conversion')) {
-      return "That sounds like a challenge for an **Autonomous Sales Engine**. Galyarder specializes in building intelligent lead qualification and sales automation systems that eliminate manual screening and dramatically improve conversion rates. This could be an ideal flagship partnership opportunity. [Propose a Flagship Project](/contact?intent=flagship&archetype=autonomous_sales_engine&source=ai_concierge)";
-    }
-    
-    if (lowerQuery.includes('knowledge') || lowerQuery.includes('internal') || lowerQuery.includes('documentation') || lowerQuery.includes('search') || lowerQuery.includes('enterprise') || lowerQuery.includes('information') || lowerQuery.includes('data')) {
-      return "That sounds like a challenge for an **Enterprise AI Brain**. Transforming disorganized internal knowledge into queryable, intelligent assets is exactly what Galyarder's systems excel at. This aligns perfectly with the flagship partner mandate. [Propose a Flagship Project](/contact?intent=flagship&archetype=enterprise_ai_brain&source=ai_concierge)";
-    }
-    
-    if (lowerQuery.includes('automation') || lowerQuery.includes('manual') || lowerQuery.includes('repetitive') || lowerQuery.includes('operational') || lowerQuery.includes('workflow') || lowerQuery.includes('process')) {
-      return "That sounds like a challenge for an **Operational Automation Core**. Eliminating high-volume, repetitive manual work through robust automation is a core specialty. This could be the flagship project Galyarder is seeking. [Propose a Flagship Project](/contact?intent=flagship&archetype=operational_automation_core&source=ai_concierge)";
-    }
-    
-    // High-intent keywords - guide to Flagship Project
-    if (lowerQuery.includes('help') || lowerQuery.includes('project') || 
-        lowerQuery.includes('collaboration') || lowerQuery.includes('hire') || lowerQuery.includes('partner')) {
-      return "Galyarder is currently seeking a flagship partner for a high-impact project. Based on your inquiry, I recommend proceeding to 'Propose a Flagship Project' where the autonomous intake system will qualify your requirements and determine if this aligns with the current mandate for Autonomous Sales Engine, Enterprise AI Brain, or Operational Automation Core solutions. [Propose a Flagship Project](/contact?intent=flagship&source=ai_concierge)";
-    }
-    
-    // Project-specific queries
-    if (lowerQuery.includes('airdropops') || lowerQuery.includes('web3') || lowerQuery.includes('defi')) {
-      return "AirdropOps achieved 200% ROI improvement through intelligent automation. The system processes 50,000+ opportunities with 92% accuracy using LLM analysis and n8n workflow execution. This demonstrates the **Operational Automation Core** archetype. If you have similar automation challenges, consider proposing a flagship project collaboration. [Explore AirdropOps](/projects#airdropops)";
-    }
-    
-    if (lowerQuery.includes('galyarderos') || lowerQuery.includes('productivity') || lowerQuery.includes('personal')) {
-      return "GalyarderOS eliminates cognitive overhead through unified system architecture. Achieved 85% reduction in decision fatigue with modular microservices and AI-powered automation. This showcases both **Enterprise AI Brain** and **Operational Automation Core** capabilities. For enterprise applications of these patterns, explore the flagship project opportunity. [View GalyarderOS](/projects#galyarderos)";
-    }
-    
-    if (lowerQuery.includes('prompt') || lowerQuery.includes('codex') || lowerQuery.includes('ai')) {
-      return "Prompt Codex systematizes AI workflow creation through DSL-based composition. Reduced development time by 70% with template inheritance and A/B testing. This represents **Enterprise AI Brain** capabilities. If your organization needs AI workflow systematization, this could be ideal for a flagship partnership. [Try the Sandbox](/sandbox)";
-    }
-    
-    // Architecture and technical queries
-    if (lowerQuery.includes('architecture') || lowerQuery.includes('system') || lowerQuery.includes('design')) {
-      return "Galyarder's architectural approach emphasizes async-first patterns, modular decomposition, and horizontal scaling. These principles are now being deployed for a flagship partner project. If you have complex architectural challenges that align with the three core archetypes, consider proposing a collaboration. [Explore Architecture](/blueprint)";
-    }
-    
-    // Capabilities and experience
-    if (lowerQuery.includes('experience') || lowerQuery.includes('skills') || lowerQuery.includes('capabilities')) {
-      return "Core expertise: 15+ smart contracts deployed, 10,000+ automated processes, 200% average efficiency gains. These capabilities are now focused on finding one flagship partner for a definitive case study. If your organization has a complex challenge requiring these skills, explore the flagship project opportunity. [View Capabilities](/about)";
-    }
-    
-    // Default professional response with flagship focus
-    return "I can provide detailed information on Galyarder's architectures and capabilities. However, the current priority is identifying a flagship partner for a high-impact project. If you have a complex challenge involving sales automation, knowledge management, or operational automation, I recommend exploring the 'Propose a Flagship Project' option. [Propose a Flagship Project](/contact?intent=flagship&source=ai_concierge)";
-  };
-
-  const suggestions = [
-    "Tell me about flagship partnership opportunities",
-    "I have a sales automation challenge", 
-    "We need to organize our internal knowledge",
-    "Help us eliminate manual operations"
-  ];
-
-  const handleSuggestion = (suggestion: string) => {
-    setInput(suggestion);
-    handleSend();
   };
 
   const handleDragStart = () => {
@@ -597,24 +482,36 @@ const ProactiveAIConcierge = () => {
         return {
           icon: Wifi,
           color: 'text-green-400',
-          title: 'Connected to AI service'
+          title: 'Connected to Galyarder AI interface'
         };
       case 'failed':
         return {
           icon: WifiOff,
-          color: 'text-yellow-400',
-          title: `AI service unavailable${lastWebhookError ? `: ${lastWebhookError}` : ''}`
+          color: 'text-red-400',
+          title: `AI interface unavailable${lastWebhookError ? `: ${lastWebhookError}` : ''}`
         };
       default:
         return {
           icon: AlertCircle,
-          color: 'text-gray-400',
-          title: 'Checking AI service status...'
+          color: 'text-blue-400',
+          title: 'Connecting to Galyarder AI interface...'
         };
     }
   };
 
   const statusInfo = getStatusInfo();
+
+  const suggestions = [
+    "Tell me about flagship partnership opportunities",
+    "I have a sales automation challenge", 
+    "We need to organize our internal knowledge",
+    "Help us eliminate manual operations"
+  ];
+
+  const handleSuggestion = (suggestion: string) => {
+    setInput(suggestion);
+    handleSend();
+  };
 
   return (
     <>
@@ -691,9 +588,9 @@ const ProactiveAIConcierge = () => {
                   />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-semibold text-white text-xs sm:text-sm truncate">AI Interface</h3>
+                  <h3 className="font-semibold text-white text-xs sm:text-sm truncate">Galyarder AI Interface</h3>
                   <div className="flex items-center space-x-2">
-                    <p className="text-xs text-gray-400 truncate">Flagship Partner Identification System</p>
+                    <p className="text-xs text-gray-400 truncate">Digital Interface & Project Assistant</p>
                     <div className="flex items-center" title={statusInfo.title}>
                       <statusInfo.icon className={`w-3 h-3 ${statusInfo.color}`} />
                     </div>
@@ -733,7 +630,7 @@ const ProactiveAIConcierge = () => {
                       message.type === 'user'
                         ? 'bg-indigo-500 text-white shadow-lg'
                         : message.type === 'system'
-                        ? 'bg-yellow-500/20 text-yellow-200 border border-yellow-500/30 shadow-md'
+                        ? 'bg-red-500/20 text-red-200 border border-red-500/30 shadow-md'
                         : 'bg-gray-800/80 text-gray-200 border border-gray-700/50 shadow-md'
                     }`}
                   >
@@ -775,7 +672,7 @@ const ProactiveAIConcierge = () => {
                     <div className="flex items-center space-x-2">
                       <Loader className="h-3 w-3 sm:h-4 sm:w-4 text-indigo-400 animate-spin" />
                       <span className="text-gray-400 text-xs">
-                        {webhookStatus === 'working' ? 'Analyzing for flagship potential...' : 'Processing locally...'}
+                        Galyarder is thinking...
                       </span>
                     </div>
                   </div>
@@ -787,7 +684,7 @@ const ProactiveAIConcierge = () => {
                 <div className="space-y-2 sm:space-y-3 pt-2">
                   <p className="text-xs text-gray-400 flex items-center font-medium">
                     <Terminal className="w-3 h-3 mr-2" />
-                    Flagship partner queries:
+                    Suggested topics:
                   </p>
                   {suggestions.map((suggestion, index) => (
                     <motion.button
@@ -813,7 +710,7 @@ const ProactiveAIConcierge = () => {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                  placeholder="Describe your automation challenge..."
+                  placeholder="Ask Galyarder about projects, architecture, or availability..."
                   className="flex-1 px-3 py-2 sm:px-4 sm:py-3 bg-gray-700/80 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none text-xs sm:text-sm shadow-inner touch-manipulation"
                 />
                 <motion.button
