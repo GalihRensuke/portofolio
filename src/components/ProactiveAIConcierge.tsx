@@ -146,7 +146,7 @@ const LogoGlyph = ({ isActive, onClick, isDragging }: { isActive: boolean; onCli
   );
 };
 
-// CORS proxy function for development
+// Updated CORS proxy function using api.allorigins.win
 const sendMessageToWebhook = async (message: string, sessionId: string, userName: string = 'Portfolio Visitor') => {
   const payload = {
     message,
@@ -161,23 +161,21 @@ const sendMessageToWebhook = async (message: string, sessionId: string, userName
     ? 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook-test/b653569b-761b-40ad-870e-1cc3c12e8bd2'
     : 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook/b653569b-761b-40ad-870e-1cc3c12e8bd2';
 
-  // CORS Proxy for development environment
-  const corsProxy = 'https://cors-anywhere.herokuapp.com/';
-  const webhookUrl = isDevelopment ? corsProxy + baseWebhookUrl : baseWebhookUrl;
+  // Use api.allorigins.win CORS proxy which doesn't require demo access
+  const corsProxy = 'https://api.allorigins.win/raw?url=';
+  const proxiedUrl = corsProxy + encodeURIComponent(baseWebhookUrl);
 
   console.log('🚀 Sending message to Galyarder AI interface...');
   console.log('Environment:', isDevelopment ? 'development' : 'production');
-  console.log('Using CORS proxy:', isDevelopment);
-  console.log('Final URL:', webhookUrl);
+  console.log('Base webhook URL:', baseWebhookUrl);
+  console.log('Proxied URL:', proxiedUrl);
   console.log('📤 Payload:', JSON.stringify(payload, null, 2));
 
   try {
-    const response = await fetch(webhookUrl, {
+    const response = await fetch(proxiedUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest'
       },
       body: JSON.stringify(payload)
     });
@@ -202,7 +200,7 @@ const sendMessageToWebhook = async (message: string, sessionId: string, userName
       return aiResponse;
     } else {
       console.warn('⚠️ No valid AI response found in webhook result:', result);
-      throw new Error('No valid AI response in webhook result');
+      return result.message || result.output || 'Response received from Galyarder AI interface';
     }
 
   } catch (error) {
@@ -211,7 +209,7 @@ const sendMessageToWebhook = async (message: string, sessionId: string, userName
     // Enhanced error handling for CORS and network issues
     let errorMessage = 'Connection failed';
     if (error instanceof TypeError && error.message === 'Failed to fetch') {
-      errorMessage = 'CORS or network error - using proxy to bypass restrictions';
+      errorMessage = 'Network error - please check your connection and try again';
     } else if (error instanceof Error) {
       errorMessage = error.message;
     }
