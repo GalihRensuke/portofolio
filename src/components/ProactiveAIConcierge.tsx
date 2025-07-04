@@ -71,6 +71,11 @@ const sendMessageToWebhook = async (message: string, sessionId: string, userName
 const generateIntelligentFallback = (message: string): string => {
   const input = message.toLowerCase().trim();
   
+  // Scheduling-specific responses
+  if (input.includes('schedule') || input.includes('call') || input.includes('meeting') || input.includes('consultation')) {
+    return "I can help you schedule a consultation with Galyarder. He's currently available for flagship project discussions and technical consultations. What type of project or challenge would you like to discuss? This will help me route your request appropriately.";
+  }
+  
   // Greeting responses
   if (input.includes('hello') || input.includes('hi') || input === 'yo' || input.includes('hey')) {
     return "I am the digital interface for Galyarder. I have access to his project data, architectural principles, and availability. How can I assist?";
@@ -277,6 +282,38 @@ const ProactiveAIConcierge = () => {
       clearCurrentMessage();
     }
   }, [currentMessage, isOpen]);
+
+  // Listen for AI trigger events from contact page
+  useEffect(() => {
+    const handleAITrigger = (event: CustomEvent) => {
+      const { message, context, source } = event.detail;
+      
+      if (!isOpen) {
+        setIsOpen(true);
+      }
+      
+      // Add the triggered message as if user sent it
+      addMessage('user', message);
+      
+      // Process the message through AI
+      setConversation(prev => ({ ...prev, isTyping: true, showSuggestions: false }));
+      
+      setTimeout(async () => {
+        try {
+          const response = await sendMessageToWebhook(message, sessionId);
+          addMessage('assistant', response);
+        } catch (error) {
+          console.error('Failed to get AI response:', error);
+          addMessage('assistant', "I can help you schedule a consultation with Galyarder. What type of project would you like to discuss?");
+        } finally {
+          setConversation(prev => ({ ...prev, isTyping: false }));
+        }
+      }, 1000);
+    };
+
+    window.addEventListener('triggerAIConcierge', handleAITrigger as EventListener);
+    return () => window.removeEventListener('triggerAIConcierge', handleAITrigger as EventListener);
+  }, [isOpen, sessionId]);
 
   // Proactive triggers for exit intent and inactivity
   useEffect(() => {

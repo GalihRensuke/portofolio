@@ -44,52 +44,23 @@ const ContactPage = () => {
       icon: Calendar,
       title: 'Schedule a Call',
       desc: 'Book a meeting to discuss your project',
-      link: '#schedule-call',
+      link: '#',
       external: false,
-      isWebhook: true
+      isAITrigger: true
     }
   ];
 
-  const handleScheduleCall = async () => {
-    try {
-      console.log('📅 Scheduling call via N8N webhook...');
-      
-      const payload = {
-        action: 'schedule_call',
-        timestamp: new Date().toISOString(),
-        source: 'contact_page_direct',
-        user_agent: navigator.userAgent,
-        referrer: document.referrer || 'direct'
-      };
-
-      const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook/b653569b-761b-40ad-870e-1cc3c12e8bd2';
-      
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Source': 'galyarder-portfolio-schedule',
-          'X-Action': 'schedule_call'
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.calendly_url) {
-          window.open(data.calendly_url, '_blank');
-        } else {
-          // Fallback to direct contact
-          window.location.href = 'mailto:admin@galyarder.my.id?subject=Schedule a Call&body=I would like to schedule a consultation call to discuss my project.';
-        }
-      } else {
-        throw new Error('Webhook failed');
+  const triggerAIScheduling = () => {
+    // Trigger the AI concierge with scheduling context
+    const aiConciergeEvent = new CustomEvent('triggerAIConcierge', {
+      detail: {
+        message: "I would like to schedule a consultation call to discuss my project. What's the best way to proceed?",
+        context: 'scheduling_request',
+        source: 'contact_page_direct'
       }
-    } catch (error) {
-      console.error('Schedule call webhook failed:', error);
-      // Fallback to email
-      window.location.href = 'mailto:admin@galyarder.my.id?subject=Schedule a Call&body=I would like to schedule a consultation call to discuss my project.';
-    }
+    });
+    
+    window.dispatchEvent(aiConciergeEvent);
   };
 
   return (
@@ -140,8 +111,8 @@ const ContactPage = () => {
                   transition={{ duration: 0.4, delay: 0.4 + index * 0.1 }}
                   className="flex items-start space-x-4 p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:border-indigo-500 dark:hover:border-indigo-500 transition-colors group cursor-pointer"
                   onClick={() => {
-                    if (method.isWebhook) {
-                      handleScheduleCall();
+                    if (method.isAITrigger) {
+                      triggerAIScheduling();
                     } else if (method.external) {
                       window.open(method.link, '_blank');
                     } else {
@@ -155,21 +126,6 @@ const ContactPage = () => {
                   <div>
                     <h3 className="font-semibold mb-1">{method.title}</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-300">{method.desc}</p>
-                    {method.title === 'Professional Email' && (
-                      <p className="text-xs text-indigo-400 mt-1">admin@galyarder.my.id</p>
-                    )}
-                    {method.title === 'Personal Email' && (
-                      <p className="text-xs text-indigo-400 mt-1">muhamadgs@galyarder.my.id</p>
-                    )}
-                    {method.title === 'GitHub' && (
-                      <p className="text-xs text-indigo-400 mt-1">github.com/GalyarderOS</p>
-                    )}
-                    {method.title === 'Telegram' && (
-                      <p className="text-xs text-indigo-400 mt-1">@galyarders</p>
-                    )}
-                    {method.isWebhook && (
-                      <p className="text-xs text-green-400 mt-1">Via N8N webhook integration</p>
-                    )}
                   </div>
                 </motion.div>
               ))}
@@ -181,34 +137,13 @@ const ContactPage = () => {
               transition={{ duration: 0.6, delay: 0.8 }}
               className="mt-8 p-6 bg-gray-50 dark:bg-gray-900 rounded-lg"
             >
-              <h3 className="font-semibold mb-3">System Architecture</h3>
+              <h3 className="font-semibold mb-3">Contact Preferences</h3>
               <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                <div className="flex justify-between">
-                  <span>High-value leads ({'>'} $15K):</span>
-                  <span className="text-green-400">Auto-prioritized</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Standard inquiries:</span>
-                  <span className="text-blue-400">24-48h response</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Low-value/vague:</span>
-                  <span className="text-gray-400">Auto-filtered</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Schedule calls:</span>
-                  <span className="text-purple-400">N8N webhook</span>
-                </div>
-              </div>
-              
-              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <h4 className="font-semibold text-sm mb-2">Contact Preferences</h4>
-                <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-                  <div>• Professional inquiries: admin@galyarder.my.id</div>
-                  <div>• Personal communication: muhamadgs@galyarder.my.id</div>
-                  <div>• Quick discussions: Telegram @galyarders</div>
-                  <div>• Code collaboration: GitHub.com/GalyarderOS</div>
-                </div>
+                <div>• <strong>Professional:</strong> admin@galyarder.my.id</div>
+                <div>• <strong>Personal:</strong> muhamadgs@galyarder.my.id</div>
+                <div>• <strong>Quick chat:</strong> @galyarders</div>
+                <div>• <strong>Code:</strong> github.com/GalyarderOS</div>
+                <div>• <strong>Schedule:</strong> AI-powered booking</div>
               </div>
             </motion.div>
           </motion.div>
