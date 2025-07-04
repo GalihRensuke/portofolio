@@ -245,6 +245,7 @@ const HomePage = () => {
                 <div className="text-sm text-gray-600 dark:text-gray-400">Intelligent Operation</div>
               </div>
             </div>
+            </div>
             
             {/* Building Galyarder Ascendancy */}
             <div className="flex justify-center lg:justify-start mt-4">
