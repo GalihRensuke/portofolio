@@ -128,6 +128,8 @@ const HomePage = () => {
                   onPersonaChange={handlePersonaChange}
                 />
               </div>
+                </div>
+              </div>
             </motion.div>
           </div>
 
