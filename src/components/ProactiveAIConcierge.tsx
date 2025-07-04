@@ -712,7 +712,7 @@ const ProactiveAIConcierge = () => {
               {/* Connection Status */}
               <div className="mt-2 text-xs text-gray-500 flex items-center justify-center">
                 <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
-                Connected to Galyarder AI • Session: {sessionId.slice(-8)}
+                Connected to Galyarder AI
               </div>
             </div>
           </motion.div>
