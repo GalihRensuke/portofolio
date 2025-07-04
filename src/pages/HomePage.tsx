@@ -257,7 +257,6 @@ const HomePage = () => {
                 <div className="text-sm text-gray-600 dark:text-gray-400">Intelligent Operation</div>
               </div>
             </div>
-            </div>
           </motion.div>
         </div>
       </section>
@@ -269,5 +268,3 @@ const HomePage = () => {
 };
 
 export default HomePage;
-  )
-}
