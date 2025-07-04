@@ -236,7 +236,6 @@ const HomePage = () => {
                 <div className="text-sm text-gray-600 dark:text-gray-400">Personalization Accuracy</div>
               </div>
               <div className="text-center">
-              <div className="text-center">
                 <div className="text-3xl font-bold text-indigo-500 mb-2">60%</div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">Conversion Rate Improvement</div>
               </div>
@@ -244,7 +243,6 @@ const HomePage = () => {
                 <div className="text-3xl font-bold text-indigo-500 mb-2">24/7</div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">Intelligent Operation</div>
               </div>
-            </div>
             </div>
             
             {/* Building Galyarder Ascendancy */}
@@ -264,5 +262,3 @@ const HomePage = () => {
 };
 
 export default HomePage;
-  )
-}
