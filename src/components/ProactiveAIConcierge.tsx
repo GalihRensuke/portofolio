@@ -146,7 +146,7 @@ const LogoGlyph = ({ isActive, onClick, isDragging }: { isActive: boolean; onCli
   );
 };
 
-// Updated CORS proxy function using api.allorigins.win
+// Fixed CORS proxy function using corsproxy.io which properly forwards POST data
 const sendMessageToWebhook = async (message: string, sessionId: string, userName: string = 'Portfolio Visitor') => {
   const payload = {
     message,
@@ -161,21 +161,18 @@ const sendMessageToWebhook = async (message: string, sessionId: string, userName
     ? 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook-test/b653569b-761b-40ad-870e-1cc3c12e8bd2'
     : 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook/b653569b-761b-40ad-870e-1cc3c12e8bd2';
 
-  // Use api.allorigins.win CORS proxy which doesn't require demo access
-  const corsProxy = 'https://api.allorigins.win/raw?url=';
-  const proxiedUrl = corsProxy + encodeURIComponent(baseWebhookUrl);
-
   console.log('🚀 Sending message to Galyarder AI interface...');
   console.log('Environment:', isDevelopment ? 'development' : 'production');
   console.log('Base webhook URL:', baseWebhookUrl);
-  console.log('Proxied URL:', proxiedUrl);
   console.log('📤 Payload:', JSON.stringify(payload, null, 2));
 
   try {
-    const response = await fetch(proxiedUrl, {
+    // Use corsproxy.io which properly forwards POST data
+    const response = await fetch('https://corsproxy.io/?' + encodeURIComponent(baseWebhookUrl), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Target-URL': baseWebhookUrl
       },
       body: JSON.stringify(payload)
     });
