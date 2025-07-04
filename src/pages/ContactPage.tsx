@@ -16,31 +16,81 @@ const ContactPage = () => {
       icon: Github,
       title: 'GitHub',
       desc: 'Check out my repositories and contributions',
-      link: 'https://github.com/galyarder',
+      link: 'https://github.com/GalyarderOS/',
       external: true
     },
     {
       icon: MessageCircle,
       title: 'Telegram',
       desc: 'Direct message for quick discussions',
-      link: 'https://t.me/galyarder',
+      link: 'https://t.me/galyarders',
       external: true
     },
     {
       icon: Mail,
-      title: 'Email',
+      title: 'Professional Email',
       desc: 'For formal inquiries and collaborations',
-      link: 'mailto:hello@galyarder.dev',
+      link: 'mailto:admin@galyarder.my.id',
+      external: true
+    },
+    {
+      icon: Mail,
+      title: 'Personal Email',
+      desc: 'Direct personal communication',
+      link: 'mailto:muhamadgs@galyarder.my.id',
       external: true
     },
     {
       icon: Calendar,
       title: 'Schedule a Call',
       desc: 'Book a meeting to discuss your project',
-      link: '#',
-      external: false
+      link: '#schedule-call',
+      external: false,
+      isWebhook: true
     }
   ];
+
+  const handleScheduleCall = async () => {
+    try {
+      console.log('📅 Scheduling call via N8N webhook...');
+      
+      const payload = {
+        action: 'schedule_call',
+        timestamp: new Date().toISOString(),
+        source: 'contact_page_direct',
+        user_agent: navigator.userAgent,
+        referrer: document.referrer || 'direct'
+      };
+
+      const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook/b653569b-761b-40ad-870e-1cc3c12e8bd2';
+      
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Source': 'galyarder-portfolio-schedule',
+          'X-Action': 'schedule_call'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.calendly_url) {
+          window.open(data.calendly_url, '_blank');
+        } else {
+          // Fallback to direct contact
+          window.location.href = 'mailto:admin@galyarder.my.id?subject=Schedule a Call&body=I would like to schedule a consultation call to discuss my project.';
+        }
+      } else {
+        throw new Error('Webhook failed');
+      }
+    } catch (error) {
+      console.error('Schedule call webhook failed:', error);
+      // Fallback to email
+      window.location.href = 'mailto:admin@galyarder.my.id?subject=Schedule a Call&body=I would like to schedule a consultation call to discuss my project.';
+    }
+  };
 
   return (
     <div className="pt-24 pb-16 px-6">
@@ -83,15 +133,21 @@ const ContactPage = () => {
             <h2 className="text-2xl font-bold mb-6">Direct Contact</h2>
             <div className="space-y-4">
               {contactMethods.map((method, index) => (
-                <motion.a
+                <motion.div
                   key={method.title}
-                  href={method.link}
-                  target={method.external ? "_blank" : "_self"}
-                  rel={method.external ? "noopener noreferrer" : undefined}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.4 + index * 0.1 }}
-                  className="flex items-start space-x-4 p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:border-indigo-500 dark:hover:border-indigo-500 transition-colors group"
+                  className="flex items-start space-x-4 p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:border-indigo-500 dark:hover:border-indigo-500 transition-colors group cursor-pointer"
+                  onClick={() => {
+                    if (method.isWebhook) {
+                      handleScheduleCall();
+                    } else if (method.external) {
+                      window.open(method.link, '_blank');
+                    } else {
+                      window.location.href = method.link;
+                    }
+                  }}
                 >
                   <div className="flex-shrink-0">
                     <method.icon className="h-6 w-6 text-indigo-500 group-hover:text-indigo-400 transition-colors" />
@@ -99,8 +155,23 @@ const ContactPage = () => {
                   <div>
                     <h3 className="font-semibold mb-1">{method.title}</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-300">{method.desc}</p>
+                    {method.title === 'Professional Email' && (
+                      <p className="text-xs text-indigo-400 mt-1">admin@galyarder.my.id</p>
+                    )}
+                    {method.title === 'Personal Email' && (
+                      <p className="text-xs text-indigo-400 mt-1">muhamadgs@galyarder.my.id</p>
+                    )}
+                    {method.title === 'GitHub' && (
+                      <p className="text-xs text-indigo-400 mt-1">github.com/GalyarderOS</p>
+                    )}
+                    {method.title === 'Telegram' && (
+                      <p className="text-xs text-indigo-400 mt-1">@galyarders</p>
+                    )}
+                    {method.isWebhook && (
+                      <p className="text-xs text-green-400 mt-1">Via N8N webhook integration</p>
+                    )}
                   </div>
-                </motion.a>
+                </motion.div>
               ))}
             </div>
 
@@ -123,6 +194,20 @@ const ContactPage = () => {
                 <div className="flex justify-between">
                   <span>Low-value/vague:</span>
                   <span className="text-gray-400">Auto-filtered</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Schedule calls:</span>
+                  <span className="text-purple-400">N8N webhook</span>
+                </div>
+              </div>
+              
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <h4 className="font-semibold text-sm mb-2">Contact Preferences</h4>
+                <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                  <div>• Professional inquiries: admin@galyarder.my.id</div>
+                  <div>• Personal communication: muhamadgs@galyarder.my.id</div>
+                  <div>• Quick discussions: Telegram @galyarders</div>
+                  <div>• Code collaboration: GitHub.com/GalyarderOS</div>
                 </div>
               </div>
             </motion.div>
