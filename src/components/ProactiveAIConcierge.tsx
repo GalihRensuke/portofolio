@@ -93,6 +93,11 @@ const sendMessageToWebhook = async (message: string, sessionId: string, userName
 const generateIntelligentFallback = (message: string): string => {
   const input = message.toLowerCase().trim();
   
+  // Welcome message fallback
+  if (input === 'welcome_trigger') {
+    return "Welcome! I am the digital interface for Galyarder. I have access to his project data, architectural principles, and availability. I can help you explore flagship partnership opportunities, discuss technical challenges, or provide information about his work. How can I assist you today?";
+  }
+  
   // Scheduling-specific responses
   if (input.includes('schedule') || input.includes('call') || input.includes('meeting') || input.includes('consultation')) {
     return "I can help you schedule a consultation with Galyarder. He's currently available for flagship project discussions and technical consultations. What type of project or challenge would you like to discuss? This will help me route your request appropriately.";
@@ -270,8 +275,9 @@ const ProactiveAIConcierge = () => {
   const [conversation, setConversation] = useState<ConversationState>({
     messages: [],
     isTyping: false,
-    showSuggestions: true
+    showSuggestions: false
   });
+  const [hasShownWelcome, setHasShownWelcome] = useState(false);
 
   const dragControls = useDragControls();
   const constraintsRef = useRef<HTMLDivElement>(null);
@@ -300,11 +306,35 @@ const ProactiveAIConcierge = () => {
   useEffect(() => {
     if (currentMessage && !isOpen) {
       setIsOpen(true);
+      setHasShownWelcome(true);
       addMessage('assistant', currentMessage.content);
       clearCurrentMessage();
     }
   }, [currentMessage, isOpen]);
 
+  // Show welcome message when AI is first opened
+  useEffect(() => {
+    if (isOpen && !hasShownWelcome && conversation.messages.length === 0) {
+      setHasShownWelcome(true);
+      setConversation(prev => ({ ...prev, isTyping: true }));
+      
+      setTimeout(async () => {
+        try {
+          // Send welcome trigger to n8n webhook
+          const welcomeResponse = await sendMessageToWebhook("WELCOME_TRIGGER", sessionId, "Portfolio Visitor");
+          addMessage('assistant', welcomeResponse);
+          setConversation(prev => ({ ...prev, showSuggestions: true }));
+        } catch (error) {
+          console.error('Failed to get welcome message:', error);
+          // Fallback welcome message
+          addMessage('assistant', "Welcome! I am the digital interface for Galyarder. I have access to his project data, architectural principles, and availability. I can help you explore flagship partnership opportunities or answer questions about his work. How can I assist you today?");
+          setConversation(prev => ({ ...prev, showSuggestions: true }));
+        } finally {
+          setConversation(prev => ({ ...prev, isTyping: false }));
+        }
+      }, 800);
+    }
+  }, [isOpen, hasShownWelcome, conversation.messages.length, sessionId]);
   // Listen for AI trigger events from contact page
   useEffect(() => {
     const handleAITrigger = (event: CustomEvent) => {
@@ -312,6 +342,7 @@ const ProactiveAIConcierge = () => {
       
       if (!isOpen) {
         setIsOpen(true);
+        setHasShownWelcome(true);
       }
       
       // Add the triggered message as if user sent it
@@ -345,7 +376,7 @@ const ProactiveAIConcierge = () => {
     const triggerProactively = () => {
       if (!isOpen && conversation.messages.length === 0) {
         setIsOpen(true);
-        addMessage('assistant', "I am the digital interface for Galyarder. I have access to his project data, architectural principles, and availability. How can I assist?");
+        // Welcome message will be triggered by useEffect
       }
     };
 
@@ -665,7 +696,7 @@ const ProactiveAIConcierge = () => {
               )}
 
               {/* Professional Suggestions - Mobile optimized */}
-              {conversation.showSuggestions && conversation.messages.length > 0 && (
+              {conversation.showSuggestions && conversation.messages.length > 0 && !conversation.isTyping && (
                 <div className="space-y-2 sm:space-y-3 pt-2">
                   <p className="text-xs text-gray-400 flex items-center font-medium">
                     <Terminal className="w-3 h-3 mr-2" />
