@@ -4,7 +4,11 @@ import { Terminal, Activity } from 'lucide-react';
 import { useMissionLog } from '../hooks/useMissionLog';
 import { formatDistanceToNow } from 'date-fns';
 
-const MissionControl = () => {
+interface MissionControlProps {
+  additionalText?: string;
+}
+
+const MissionControl: React.FC<MissionControlProps> = ({ additionalText }) => {
   const { currentMission, loading } = useMissionLog();
 
   if (loading) {
@@ -43,6 +47,11 @@ const MissionControl = () => {
             </div>
           )}
         </div>
+        {additionalText && (
+          <span className="text-sm font-medium text-gray-400 tracking-wide whitespace-nowrap">
+            {additionalText}
+          </span>
+        )}
       </div>
     </motion.div>
   );

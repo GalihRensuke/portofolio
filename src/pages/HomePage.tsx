@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import ParticleBackground from '../components/ParticleBackground';
 import InteractiveSystemCube from '../components/InteractiveSystemCube';
 import StatusBadge from '../components/StatusBadge';
@@ -16,6 +17,7 @@ const HomePage = () => {
   const personalization = usePersonalization();
   const [selectedPersona, setSelectedPersona] = useState<Persona>(personalization.persona);
   const { setCurrentPage, setScrollDepth } = useUserBehaviorStore();
+  const navigate = useNavigate();
 
   useEffect(() => {
     setCurrentPage('/');
@@ -37,6 +39,22 @@ const HomePage = () => {
   const handlePersonaChange = (persona: Persona) => {
     setSelectedPersona(persona);
     localStorage.setItem('galyarder_persona', persona);
+    
+    // Navigate to specific pages based on persona
+    switch (persona) {
+      case 'founder':
+        navigate('/about');
+        break;
+      case 'developer':
+        navigate('/stack');
+        break;
+      case 'investor':
+        navigate('/blueprint');
+        break;
+      default:
+        // Stay on current page for default persona
+        break;
+    }
   };
 
   return (
@@ -97,18 +115,11 @@ const HomePage = () => {
               transition={{ duration: 0.8, delay: 1.0 }}
               className="text-sm text-gray-400 space-y-4"
             >
-              <MissionControl />
+              <MissionControl additionalText="Building Galyarder Ascendancy" />
               
               <div className="flex flex-col space-y-2">
                 <SemanticQuery />
                 <div className="flex items-center justify-center lg:justify-start space-x-2 text-gray-500">
-                  <Search className="h-4 w-4" />
-                  <span>Query my knowledge base with <code className="px-1 py-0.5 bg-gray-800 rounded text-indigo-300">⌘K</code></span>
-                </div>
-                <div className="flex items-center justify-center lg:justify-start space-x-2 text-gray-400">
-                  <span className="text-sm font-medium">Building Galyarder Ascendancy</span>
-                </div>
-              </div>
 
               {/* Persona Selector */}
               <div className="flex justify-center lg:justify-start">
@@ -244,12 +255,6 @@ const HomePage = () => {
                 <div className="text-sm text-gray-600 dark:text-gray-400">Intelligent Operation</div>
               </div>
             </div>
-            
-            {/* Building Galyarder Ascendancy */}
-            <div className="flex justify-center lg:justify-start mt-4">
-              <span className="text-sm font-medium text-gray-400 tracking-wide">
-                Building Galyarder Ascendancy
-              </span>
             </div>
           </motion.div>
         </div>
