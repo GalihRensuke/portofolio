@@ -146,73 +146,74 @@ const LogoGlyph = ({ isActive, onClick, isDragging }: { isActive: boolean; onCli
   );
 };
 
-// Fixed CORS proxy function using corsproxy.io which properly forwards POST data
+// PHASE 1: MOCK DEVELOPMENT - Working AI Interface
 const sendMessageToWebhook = async (message: string, sessionId: string, userName: string = 'Portfolio Visitor') => {
-  const payload = {
-    message,
-    timestamp: new Date().toISOString(),
-    sessionId,
-    userName
-  };
-
-  // Determine webhook URL based on environment
-  const isDevelopment = import.meta.env.VITE_ENVIRONMENT === 'development' || import.meta.env.DEV;
-  const baseWebhookUrl = isDevelopment 
-    ? 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook-test/b653569b-761b-40ad-870e-1cc3c12e8bd2'
-    : 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook/b653569b-761b-40ad-870e-1cc3c12e8bd2';
-
-  console.log('🚀 Sending message to Galyarder AI interface...');
-  console.log('Environment:', isDevelopment ? 'development' : 'production');
-  console.log('Base webhook URL:', baseWebhookUrl);
-  console.log('📤 Payload:', JSON.stringify(payload, null, 2));
-
-  try {
-    // Use corsproxy.io which properly forwards POST data
-    const response = await fetch('https://corsproxy.io/?' + encodeURIComponent(baseWebhookUrl), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Target-URL': baseWebhookUrl
-      },
-      body: JSON.stringify(payload)
-    });
-
-    console.log('📥 Response status:', response.status);
-    console.log('📥 Response headers:', Object.fromEntries(response.headers.entries()));
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Webhook error response:', errorText);
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    console.log('✅ Webhook success response:', result);
-    
-    // Extract AI response from n8n result
-    const aiResponse = result.response || result.message || result.output || result.data?.response;
-    
-    if (aiResponse && typeof aiResponse === 'string') {
-      console.log('🤖 Galyarder AI response:', aiResponse);
-      return aiResponse;
-    } else {
-      console.warn('⚠️ No valid AI response found in webhook result:', result);
-      return result.message || result.output || 'Response received from Galyarder AI interface';
-    }
-
-  } catch (error) {
-    console.error('❌ Failed to connect to Galyarder AI interface:', error);
-    
-    // Enhanced error handling for CORS and network issues
-    let errorMessage = 'Connection failed';
-    if (error instanceof TypeError && error.message === 'Failed to fetch') {
-      errorMessage = 'Network error - please check your connection and try again';
-    } else if (error instanceof Error) {
-      errorMessage = error.message;
-    }
-    
-    throw new Error(errorMessage);
+  console.log('🤖 Mock AI Processing:', { message, sessionId, userName });
+  
+  // Simulate realistic processing time
+  await new Promise(resolve => setTimeout(resolve, 1200));
+  
+  const input = message.toLowerCase().trim();
+  
+  // Galyarder AI Response Logic
+  if (input.includes('hello') || input.includes('hi') || input === 'yo') {
+    return "I am the digital interface for Galyarder. I have access to his project data, architectural principles, and availability. How can I assist?";
   }
+  
+  if (input.includes('schedule') || input.includes('meeting') || input.includes('consultation')) {
+    return "I'd be happy to help schedule a consultation with Galyarder. What type of project are you interested in discussing? I can check his availability and set up a meeting for this week.";
+  }
+  
+  if (input.includes('project') || input.includes('work') || input.includes('portfolio')) {
+    return "Galyarder has extensive experience in web development, system architecture, and automation solutions. He's worked with React, Node.js, Python, cloud platforms, and AI integrations. What specific technology or project type interests you?";
+  }
+  
+  if (input.includes('skill') || input.includes('experience') || input.includes('tech')) {
+    return "Galyarder specializes in full-stack development, system architecture, and AI integrations. His tech stack includes React, TypeScript, Node.js, Python, AWS, and various automation tools. Would you like details about any specific area?";
+  }
+  
+  if (input.includes('availability') || input.includes('hire') || input.includes('contact')) {
+    return "Galyarder is currently available for new projects and consultations. I can help schedule a discussion about your requirements. What type of project or collaboration are you considering?";
+  }
+  
+  if (input.includes('flagship') || input.includes('partnership') || input.includes('collaboration')) {
+    return "Galyarder is currently seeking a flagship partner for a high-impact project. Based on your inquiry, I recommend proceeding to 'Propose a Flagship Project' where the autonomous intake system will qualify your requirements and determine if this aligns with the current mandate for Autonomous Sales Engine, Enterprise AI Brain, or Operational Automation Core solutions. [Propose a Flagship Project](/contact?intent=flagship&source=ai_concierge)";
+  }
+  
+  if (input.includes('sales') || input.includes('lead') || input.includes('qualification') || input.includes('funnel') || input.includes('crm') || input.includes('conversion')) {
+    return "That sounds like a challenge for an **Autonomous Sales Engine**. Galyarder specializes in building intelligent lead qualification and sales automation systems that eliminate manual screening and dramatically improve conversion rates. This could be an ideal flagship partnership opportunity. [Propose a Flagship Project](/contact?intent=flagship&archetype=autonomous_sales_engine&source=ai_concierge)";
+  }
+  
+  if (input.includes('knowledge') || input.includes('internal') || input.includes('documentation') || input.includes('search') || input.includes('enterprise') || input.includes('information') || input.includes('data')) {
+    return "That sounds like a challenge for an **Enterprise AI Brain**. Transforming disorganized internal knowledge into queryable, intelligent assets is exactly what Galyarder's systems excel at. This aligns perfectly with the flagship partner mandate. [Propose a Flagship Project](/contact?intent=flagship&archetype=enterprise_ai_brain&source=ai_concierge)";
+  }
+  
+  if (input.includes('automation') || input.includes('manual') || input.includes('repetitive') || input.includes('operational') || input.includes('workflow') || input.includes('process')) {
+    return "That sounds like a challenge for an **Operational Automation Core**. Eliminating high-volume, repetitive manual work through robust automation is a core specialty. This could be the flagship project Galyarder is seeking. [Propose a Flagship Project](/contact?intent=flagship&archetype=operational_automation_core&source=ai_concierge)";
+  }
+  
+  if (input.includes('airdropops') || input.includes('web3') || input.includes('defi')) {
+    return "AirdropOps achieved 200% ROI improvement through intelligent automation. The system processes 50,000+ opportunities with 92% accuracy using LLM analysis and n8n workflow execution. This demonstrates the **Operational Automation Core** archetype. If you have similar automation challenges, consider proposing a flagship project collaboration. [Explore AirdropOps](/projects#airdropops)";
+  }
+  
+  if (input.includes('galyarderos') || input.includes('productivity') || input.includes('personal')) {
+    return "GalyarderOS eliminates cognitive overhead through unified system architecture. Achieved 85% reduction in decision fatigue with modular microservices and AI-powered automation. This showcases both **Enterprise AI Brain** and **Operational Automation Core** capabilities. For enterprise applications of these patterns, explore the flagship project opportunity. [View GalyarderOS](/projects#galyarderos)";
+  }
+  
+  if (input.includes('prompt') || input.includes('codex') || input.includes('ai')) {
+    return "Prompt Codex systematizes AI workflow creation through DSL-based composition. Reduced development time by 70% with template inheritance and A/B testing. This represents **Enterprise AI Brain** capabilities. If your organization needs AI workflow systematization, this could be ideal for a flagship partnership. [Try the Sandbox](/sandbox)";
+  }
+  
+  if (input.includes('architecture') || input.includes('system') || input.includes('design')) {
+    return "Galyarder's architectural approach emphasizes async-first patterns, modular decomposition, and horizontal scaling. These principles are now being deployed for a flagship partner project. If you have complex architectural challenges that align with the three core archetypes, consider proposing a collaboration. [Explore Architecture](/blueprint)";
+  }
+  
+  if (input.includes('experience') || input.includes('capabilities')) {
+    return "Core expertise: 15+ smart contracts deployed, 10,000+ automated processes, 200% average efficiency gains. These capabilities are now focused on finding one flagship partner for a definitive case study. If your organization has a complex challenge requiring these skills, explore the flagship project opportunity. [View Capabilities](/about)";
+  }
+  
+  // Default professional response
+  return "I can provide detailed information on Galyarder's architectures and capabilities. However, the current priority is identifying a flagship partner for a high-impact project. If you have a complex challenge involving sales automation, knowledge management, or operational automation, I recommend exploring the 'Propose a Flagship Project' option. [Propose a Flagship Project](/contact?intent=flagship&source=ai_concierge)";
 };
 
 const ProactiveAIConcierge = () => {
@@ -220,7 +221,7 @@ const ProactiveAIConcierge = () => {
   const [input, setInput] = useState('');
   const [position, setPosition] = useState<Position>({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
-  const [webhookStatus, setWebhookStatus] = useState<'unknown' | 'working' | 'failed'>('unknown');
+  const [webhookStatus, setWebhookStatus] = useState<'unknown' | 'working' | 'failed'>('working'); // Set to working for mock
   const [lastWebhookError, setLastWebhookError] = useState<string>('');
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   const [conversation, setConversation] = useState<ConversationState>({
@@ -476,7 +477,7 @@ const ProactiveAIConcierge = () => {
       isTyping: false,
       showSuggestions: true
     });
-    setWebhookStatus('unknown'); // Reset webhook status
+    setWebhookStatus('working'); // Reset webhook status to working for mock
     setLastWebhookError(''); // Clear error message
     localStorage.removeItem('galyarder_ai_conversation');
   };
