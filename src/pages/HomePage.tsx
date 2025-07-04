@@ -105,6 +105,9 @@ const HomePage = () => {
                   <Search className="h-4 w-4" />
                   <span>Query my knowledge base with <code className="px-1 py-0.5 bg-gray-800 rounded text-indigo-300">⌘K</code></span>
                 </div>
+                <div className="flex items-center justify-center lg:justify-start space-x-2 text-gray-400">
+                  <span className="text-sm font-medium">Building Galyarder Ascendancy</span>
+                </div>
               </div>
 
               {/* Persona Selector */}
