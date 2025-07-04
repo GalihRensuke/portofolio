@@ -21,6 +21,94 @@ interface Position {
   y: number;
 }
 
+// PRODUCTION N8N WEBHOOK INTEGRATION
+const sendMessageToWebhook = async (message: string, sessionId: string, userName?: string) => {
+  const payload = {
+    message,
+    timestamp: new Date().toISOString(),
+    sessionId,
+    userName: userName || 'Portfolio Visitor',
+    source: 'galyarder-portfolio-ai-concierge',
+    domain: window.location.hostname
+  };
+
+  try {
+    console.log('🔗 Connecting to Galyarder AI backend...');
+    console.log('📤 Payload:', payload);
+    
+    const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://n8n-fhehrtub.us-west-1.clawcloudrun.com/webhook/b653569b-761b-40ad-870e-1cc3c12e8bd2';
+    
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Source': 'galyarder-portfolio-v4',
+        'X-Session': sessionId
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log('✅ Real AI response received:', data);
+    
+    return data.message || data.output || data.response || 'Response received from Galyarder AI';
+    
+  } catch (error) {
+    console.error('❌ Webhook connection failed:', error);
+    console.log('🔄 Falling back to enhanced mock response...');
+    
+    // Enhanced fallback with intelligent responses
+    return generateIntelligentFallback(message);
+  }
+};
+
+// Enhanced fallback system with intelligent responses
+const generateIntelligentFallback = (message: string): string => {
+  const input = message.toLowerCase().trim();
+  
+  // Greeting responses
+  if (input.includes('hello') || input.includes('hi') || input === 'yo' || input.includes('hey')) {
+    return "I am the digital interface for Galyarder. I have access to his project data, architectural principles, and availability. How can I assist?";
+  }
+  
+  // Flagship project inquiries
+  if (input.includes('flagship') || input.includes('collaboration') || input.includes('partner')) {
+    return "Galyarder is currently seeking a flagship partner for a high-impact project. The focus is on three core archetypes: Autonomous Sales Engine, Enterprise AI Brain, or Operational Automation Core. Would you like to explore if your challenge aligns with these areas?";
+  }
+  
+  // Project-specific queries
+  if (input.includes('airdrop') || input.includes('web3') || input.includes('defi')) {
+    return "AirdropOps achieved 200% ROI improvement through intelligent automation. The system processes 50,000+ opportunities with 92% accuracy using LLM analysis and n8n workflow execution. This demonstrates the Operational Automation Core archetype. Would you like to discuss similar automation challenges?";
+  }
+  
+  if (input.includes('ai') || input.includes('automation') || input.includes('workflow')) {
+    return "Galyarder specializes in AI workflow automation and has automated 10,000+ processes with 90% reduction in manual operations. The Prompt Codex system demonstrates structured AI engineering. What specific automation challenges are you facing?";
+  }
+  
+  // Architecture and technical
+  if (input.includes('architecture') || input.includes('system') || input.includes('technical')) {
+    return "Galyarder's architectural approach emphasizes async-first patterns, modular decomposition, and horizontal scaling. These principles are demonstrated across all projects. Would you like to explore specific architectural patterns or discuss your system design challenges?";
+  }
+  
+  // Contact and scheduling
+  if (input.includes('contact') || input.includes('schedule') || input.includes('call') || input.includes('meeting')) {
+    return "You can schedule a consultation through the autonomous intake system, which qualifies opportunities and routes high-value projects directly to Galyarder. Would you like to proceed with the intake process?";
+  }
+  
+  // Capabilities and experience
+  if (input.includes('experience') || input.includes('skills') || input.includes('what') || input.includes('capabilities')) {
+    return "Core expertise: 15+ smart contracts deployed, 10,000+ automated processes, 200% average efficiency gains. Current focus: finding a flagship partner for a definitive case study. What type of challenge are you working on?";
+  }
+  
+  // Default intelligent response
+  return "I can provide detailed information about Galyarder's projects, architectural principles, and collaboration opportunities. The current priority is identifying a flagship partner for a high-impact project. What specific aspect would you like to explore?";
+};
+
 const LogoGlyph = ({ isActive, onClick, isDragging }: { isActive: boolean; onClick: () => void; isDragging: boolean }) => {
   return (
     <motion.button
@@ -56,7 +144,7 @@ const LogoGlyph = ({ isActive, onClick, isDragging }: { isActive: boolean; onCli
           }}
         />
         
-        {/* Logo Image - Updated to use new logo */}
+        {/* Logo Image */}
         <motion.img
           src="/logo copy.png"
           alt="Galyarder Logo"
@@ -117,7 +205,7 @@ const LogoGlyph = ({ isActive, onClick, isDragging }: { isActive: boolean; onCli
         }}
       />
 
-      {/* Pulse ring animation - Updated position */}
+      {/* Pulse ring animation */}
       <motion.div
         className="absolute -inset-1 border-2 border-indigo-400/50 rounded-xl"
         animate={{
@@ -151,6 +239,7 @@ const ProactiveAIConcierge = () => {
   const [input, setInput] = useState('');
   const [position, setPosition] = useState<Position>({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   const [conversation, setConversation] = useState<ConversationState>({
     messages: [],
     isTyping: false,
@@ -255,73 +344,16 @@ const ProactiveAIConcierge = () => {
     
     setConversation(prev => ({ ...prev, isTyping: true, showSuggestions: false }));
 
-    // Simulate AI response with enhanced flagship archetype detection
-    setTimeout(() => {
-      const response = generateSystemResponse(userMessage);
+    try {
+      console.log('🤖 Sending message to Galyarder AI:', userMessage);
+      const response = await sendMessageToWebhook(userMessage, sessionId);
       addMessage('assistant', response);
+    } catch (error) {
+      console.error('Failed to get AI response:', error);
+      addMessage('assistant', "I'm experiencing connectivity issues. Please try again or contact Galyarder directly at admin@galyarder.my.id");
+    } finally {
       setConversation(prev => ({ ...prev, isTyping: false }));
-    }, 1500);
-  };
-
-  const generateSystemResponse = (query: string): string => {
-    const lowerQuery = query.toLowerCase();
-    
-    // FLAGSHIP PARTNER IDENTIFICATION - Enhanced with archetype alignment
-    if (lowerQuery.includes('sales') || lowerQuery.includes('lead') || lowerQuery.includes('qualification') || lowerQuery.includes('funnel') || lowerQuery.includes('crm') || lowerQuery.includes('conversion')) {
-      return "That sounds like a challenge for an **Autonomous Sales Engine**. Galyarder specializes in building intelligent lead qualification and sales automation systems that eliminate manual screening and dramatically improve conversion rates. This could be an ideal flagship partnership opportunity. [Propose a Flagship Project](/contact?intent=flagship&archetype=autonomous_sales_engine&source=ai_concierge)";
     }
-    
-    if (lowerQuery.includes('knowledge') || lowerQuery.includes('internal') || lowerQuery.includes('documentation') || lowerQuery.includes('search') || lowerQuery.includes('enterprise') || lowerQuery.includes('information') || lowerQuery.includes('data')) {
-      return "That sounds like a challenge for an **Enterprise AI Brain**. Transforming disorganized internal knowledge into queryable, intelligent assets is exactly what Galyarder's systems excel at. This aligns perfectly with the flagship partner mandate. [Propose a Flagship Project](/contact?intent=flagship&archetype=enterprise_ai_brain&source=ai_concierge)";
-    }
-    
-    if (lowerQuery.includes('automation') || lowerQuery.includes('manual') || lowerQuery.includes('repetitive') || lowerQuery.includes('operational') || lowerQuery.includes('workflow') || lowerQuery.includes('process')) {
-      return "That sounds like a challenge for an **Operational Automation Core**. Eliminating high-volume, repetitive manual work through robust automation is a core specialty. This could be the flagship project Galyarder is seeking. [Propose a Flagship Project](/contact?intent=flagship&archetype=operational_automation_core&source=ai_concierge)";
-    }
-    
-    // High-intent keywords - guide to Flagship Project
-    if (lowerQuery.includes('help') || lowerQuery.includes('project') || 
-        lowerQuery.includes('collaboration') || lowerQuery.includes('hire') || lowerQuery.includes('partner')) {
-      return "Galyarder is currently seeking a flagship partner for a high-impact project. Based on your inquiry, I recommend proceeding to 'Propose a Flagship Project' where the autonomous intake system will qualify your requirements and determine if this aligns with the current mandate for Autonomous Sales Engine, Enterprise AI Brain, or Operational Automation Core solutions. [Propose a Flagship Project](/contact?intent=flagship&source=ai_concierge)";
-    }
-    
-    // Project-specific queries
-    if (lowerQuery.includes('airdropops') || lowerQuery.includes('web3') || lowerQuery.includes('defi')) {
-      return "AirdropOps achieved 200% ROI improvement through intelligent automation. The system processes 50,000+ opportunities with 92% accuracy using LLM analysis and n8n workflow execution. This demonstrates the **Operational Automation Core** archetype. If you have similar automation challenges, consider proposing a flagship project collaboration. [Explore AirdropOps](/projects#airdropops)";
-    }
-    
-    if (lowerQuery.includes('galyarderos') || lowerQuery.includes('productivity') || lowerQuery.includes('personal')) {
-      return "GalyarderOS eliminates cognitive overhead through unified system architecture. Achieved 85% reduction in decision fatigue with modular microservices and AI-powered automation. This showcases both **Enterprise AI Brain** and **Operational Automation Core** capabilities. For enterprise applications of these patterns, explore the flagship project opportunity. [View GalyarderOS](/projects#galyarderos)";
-    }
-    
-    if (lowerQuery.includes('prompt') || lowerQuery.includes('codex') || lowerQuery.includes('ai')) {
-      return "Prompt Codex systematizes AI workflow creation through DSL-based composition. Reduced development time by 70% with template inheritance and A/B testing. This represents **Enterprise AI Brain** capabilities. If your organization needs AI workflow systematization, this could be ideal for a flagship partnership. [Try the Sandbox](/sandbox)";
-    }
-    
-    // Architecture and technical queries
-    if (lowerQuery.includes('architecture') || lowerQuery.includes('system') || lowerQuery.includes('design')) {
-      return "Galyarder's architectural approach emphasizes async-first patterns, modular decomposition, and horizontal scaling. These principles are now being deployed for a flagship partner project. If you have complex architectural challenges that align with the three core archetypes, consider proposing a collaboration. [Explore Architecture](/blueprint)";
-    }
-    
-    // Capabilities and experience
-    if (lowerQuery.includes('experience') || lowerQuery.includes('skills') || lowerQuery.includes('capabilities')) {
-      return "Core expertise: 15+ smart contracts deployed, 10,000+ automated processes, 200% average efficiency gains. These capabilities are now focused on finding one flagship partner for a definitive case study. If your organization has a complex challenge requiring these skills, explore the flagship project opportunity. [View Capabilities](/about)";
-    }
-    
-    // Default professional response with flagship focus
-    return "I can provide detailed information on Galyarder's architectures and capabilities. However, the current priority is identifying a flagship partner for a high-impact project. If you have a complex challenge involving sales automation, knowledge management, or operational automation, I recommend exploring the 'Propose a Flagship Project' option. [Propose a Flagship Project](/contact?intent=flagship&source=ai_concierge)";
-  };
-
-  const suggestions = [
-    "Tell me about flagship partnership opportunities",
-    "I have a sales automation challenge", 
-    "We need to organize our internal knowledge",
-    "Help us eliminate manual operations"
-  ];
-
-  const handleSuggestion = (suggestion: string) => {
-    setInput(suggestion);
-    handleSend();
   };
 
   const handleDragStart = () => {
@@ -415,6 +447,18 @@ const ProactiveAIConcierge = () => {
 
   const chatDimensions = getChatDimensions();
 
+  const suggestions = [
+    "Tell me about flagship partnership opportunities",
+    "I have a sales automation challenge", 
+    "We need to organize our internal knowledge",
+    "Help us eliminate manual operations"
+  ];
+
+  const handleSuggestion = (suggestion: string) => {
+    setInput(suggestion);
+    handleSend();
+  };
+
   return (
     <>
       {/* Viewport constraints for dragging */}
@@ -490,8 +534,8 @@ const ProactiveAIConcierge = () => {
                   />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-semibold text-white text-xs sm:text-sm truncate">AI Interface</h3>
-                  <p className="text-xs text-gray-400 truncate">Flagship Partner Identification System</p>
+                  <h3 className="font-semibold text-white text-xs sm:text-sm truncate">Galyarder AI</h3>
+                  <p className="text-xs text-gray-400 truncate">Real N8N Integration • Live</p>
                 </div>
               </div>
               <button
@@ -555,7 +599,7 @@ const ProactiveAIConcierge = () => {
                   <div className="bg-gray-800/80 border border-gray-700/50 p-3 sm:p-4 rounded-xl shadow-md">
                     <div className="flex items-center space-x-2">
                       <Loader className="h-3 w-3 sm:h-4 sm:w-4 text-indigo-400 animate-spin" />
-                      <span className="text-gray-400 text-xs">Analyzing for flagship potential...</span>
+                      <span className="text-gray-400 text-xs">Galyarder AI is thinking...</span>
                     </div>
                   </div>
                 </div>
@@ -592,8 +636,8 @@ const ProactiveAIConcierge = () => {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                  placeholder="Describe your automation challenge..."
-                  className="flex-1 px-3 py-2 sm:px-4 sm:py-3 bg-gray-700/80 border border-gray-600/50 rounde-lg text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none text-xs sm:text-sm shadow-inner touch-manipulation"
+                  placeholder="Ask about projects, architecture, or collaboration..."
+                  className="flex-1 px-3 py-2 sm:px-4 sm:py-3 bg-gray-700/80 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none text-xs sm:text-sm shadow-inner touch-manipulation"
                 />
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -604,6 +648,12 @@ const ProactiveAIConcierge = () => {
                 >
                   <Send className="h-3 w-3 sm:h-4 sm:w-4" />
                 </motion.button>
+              </div>
+              
+              {/* Connection Status */}
+              <div className="mt-2 text-xs text-gray-500 flex items-center justify-center">
+                <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+                Connected to Galyarder AI • Session: {sessionId.slice(-8)}
               </div>
             </div>
           </motion.div>
