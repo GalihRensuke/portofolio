@@ -53,10 +53,32 @@ const sendMessageToWebhook = async (message: string, sessionId: string, userName
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
-    const data = await response.json();
-    console.log('✅ Real AI response received:', data);
+    // Check if response is JSON
+    const contentType = response.headers.get('content-type');
+    let data;
     
-    return data.message || data.output || data.response || 'Response received from Galyarder AI';
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+      
+      // Handle N8N webhook response format - it returns an array
+      if (Array.isArray(data) && data.length > 0) {
+        // Extract message from the first item in the array
+        const responseItem = data[0];
+        if (responseItem && responseItem.message) {
+          console.log('✅ Real AI response received:', responseItem.message);
+          return responseItem.message;
+        }
+      }
+      
+      // Fallback for other JSON formats
+      console.log('✅ Real AI response received:', data);
+      return data.message || data.output || data.response || 'Response received from Galyarder AI';
+    } else {
+      // Handle plain text response
+      const textResponse = await response.text();
+      console.log('✅ Real AI response received (text):', textResponse);
+      return textResponse;
+    }
     
   } catch (error) {
     console.error('❌ Webhook connection failed:', error);
