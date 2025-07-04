@@ -594,7 +594,7 @@ const ProactiveAIConcierge = () => {
                 </div>
                 <div className="min-w-0">
                   <h3 className="font-semibold text-white text-xs sm:text-sm truncate">Galyarder AI</h3>
-                  <p className="text-xs text-gray-400 truncate">Real N8N Integration • Live</p>
+                  <p className="text-xs text-gray-400 truncate">the digital interface for Galyarder</p>
                 </div>
               </div>
               <button
