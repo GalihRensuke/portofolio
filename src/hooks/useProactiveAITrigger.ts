@@ -15,6 +15,7 @@ export interface ProactiveMessage {
 export const useProactiveAITrigger = () => {
   const [triggeredMessages, setTriggeredMessages] = useState<string[]>([]);
   const [currentMessage, setCurrentMessage] = useState<ProactiveMessage | null>(null);
+  const [isAITyping, setIsAITyping] = useState(false);
   
   const {
     currentPage,
@@ -123,6 +124,7 @@ export const useProactiveAITrigger = () => {
 
   const clearCurrentMessage = () => {
     setCurrentMessage(null);
+    setIsAITyping(false);
   };
 
   const resetTriggers = () => {
@@ -132,6 +134,8 @@ export const useProactiveAITrigger = () => {
 
   return {
     currentMessage,
+    isAITyping,
+    setIsAITyping,
     clearCurrentMessage,
     resetTriggers,
     triggeredMessages

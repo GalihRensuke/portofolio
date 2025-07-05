@@ -61,7 +61,7 @@ const HomePage = () => {
     <div className="pt-16">
       {/* Hero Section - Mission Control */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-950 via-gray-900 to-indigo-950">
-        <ParticleBackground />
+        <ParticleBackground isAITyping={false} />
         
         {/* Grid overlay */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(99,102,241,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.03)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]" />

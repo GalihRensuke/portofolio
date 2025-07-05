@@ -286,7 +286,7 @@ const ProactiveAIConcierge = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
   
   // Use the proactive AI trigger hook
-  const { currentMessage, clearCurrentMessage } = useProactiveAITrigger();
+  const { currentMessage, clearCurrentMessage, isAITyping, setIsAITyping } = useProactiveAITrigger();
 
   // Initialize position based on screen size
   useEffect(() => {
@@ -433,6 +433,8 @@ const ProactiveAIConcierge = () => {
     const messageId = Date.now().toString();
     const words = fullContent.split(' ');
     let currentWordIndex = 0;
+    
+    setIsAITyping(true);
 
     // Add an initial streaming message placeholder
     setConversation(prev => ({
@@ -470,6 +472,7 @@ const ProactiveAIConcierge = () => {
           });
           return { ...prev, isTyping: false, showSuggestions: true, messages: updatedMessages };
         });
+        setIsAITyping(false);
       }
     }, 50);
   };
