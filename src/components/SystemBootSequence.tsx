@@ -77,8 +77,12 @@ const SystemBootSequence: React.FC<BootSequenceProps> = ({ onBootComplete }) => 
               transition={{ duration: 1, type: "spring", stiffness: 100 }}
               className="text-center mb-12"
             >
-              <div className="w-24 h-24 mx-auto bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mb-4">
-                <Terminal className="h-12 w-12 text-white" />
+              <div className="w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-4 overflow-hidden border-2 border-indigo-500/30">
+                <img 
+                  src="/logo.png" 
+                  alt="Galyarder Logo" 
+                  className="w-full h-full object-contain"
+                />
               </div>
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
