@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { motion, useScroll, useTransform, useSpring, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import ParticleBackground from '../components/ParticleBackground';
-import InteractiveSystemCube from '../components/InteractiveSystemCube';
+import RotatingYinYang from '../components/RotatingYinYang';
 import ProjectCaseStudy from '../components/ProjectCaseStudy';
 import AutonomousIntake from '../components/AutonomousIntake';
 import FlagshipMandate from '../components/FlagshipMandate';
@@ -196,7 +196,7 @@ const HomePage = () => {
               transition={{ duration: 0.8 }}
               viewport={{ once: true }}
             >
-              <InteractiveSystemCube />
+              <RotatingYinYang imageSrc="/assets/image.png" />
             </motion.div>
 
             <motion.div
