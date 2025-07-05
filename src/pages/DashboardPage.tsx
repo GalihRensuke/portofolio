@@ -137,7 +137,7 @@ const DashboardPage = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Tab Description */}
