@@ -384,6 +384,8 @@ const automateDecision = async (context) => {
     };
   };
 
+      whileHover={{ scale: 1.03, y: -5 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
   return (
     <>
       <motion.div

@@ -4,10 +4,38 @@ import { motion } from 'framer-motion';
 import { Menu, X, Terminal } from 'lucide-react';
 import ClearanceLevelIndicator from './ClearanceLevelIndicator';
 import MissionControl from './MissionControl';
+import AchievementModal from './AchievementModal';
+import { incrementEngagementScore } from '../utils/gamification';
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [logoClickCount, setLogoClickCount] = useState(0);
+  const [showAchievementModal, setShowAchievementModal] = useState(false);
   const location = useLocation();
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    // Increment engagement score
+    incrementEngagementScore(1);
+    
+    // Increment click count
+    const newCount = logoClickCount + 1;
+    setLogoClickCount(newCount);
+    
+    // Check if easter egg threshold is reached
+    if (newCount >= 10) {
+      setShowAchievementModal(true);
+      setLogoClickCount(0); // Reset counter
+      // Bonus points for finding the easter egg
+      incrementEngagementScore(10);
+    }
+    
+    // Navigate to home after a short delay to allow the click to register
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 100);
+  };
 
   const navItems = [
     { path: '/', label: 'Home' },
@@ -27,7 +55,11 @@ const Navigation = () => {
         <div className="flex items-center justify-between h-16">
           {/* Left Side - Logo Only */}
           <div className="flex items-center flex-shrink-0">
-            <Link to="/" className="flex items-center space-x-2 group">
+            <Link 
+              to="/" 
+              className="flex items-center space-x-2 group cursor-pointer"
+              onClick={handleLogoClick}
+            >
               <Terminal className="h-6 w-6 text-indigo-500 group-hover:text-indigo-400 transition-colors" />
               <span className="font-semibold text-lg text-gray-900 dark:text-white">Galyarder</span>
             </Link>
@@ -112,6 +144,12 @@ const Navigation = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Achievement Modal */}
+      <AchievementModal
+        isOpen={showAchievementModal}
+        onClose={() => setShowAchievementModal(false)}
+      />
     </nav>
   );
 };

@@ -76,7 +76,7 @@ const ParticleBackground: React.FC<ParticleBackgroundProps> = ({ isAITyping = fa
             },
             modes: {
               repulse: {
-                distance: isAITyping ? 150 : 100,
+                distance: 150,
                 duration: 0.4,
               },
             },

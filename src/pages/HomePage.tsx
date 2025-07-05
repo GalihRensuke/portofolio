@@ -14,6 +14,12 @@ import { galyarderInsights } from '../data/galyarderInsights';
 import { incrementEngagementScore, ENGAGEMENT_SCORING, getClearanceLevel } from '../utils/gamification';
 import { Terminal, Zap, Brain, Code, Database, Shield, Eye, Cpu, Network, BarChart3, Users, Coins, ArrowRight, ExternalLink, Github, Star, Crown, Rocket } from 'lucide-react';
 
+// Animation variants for scroll-triggered animations
+const fadeInUp = {
+  initial: { opacity: 0, y: 40 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.7, ease: "easeOut" } }
+};
+
 const HomePage = () => {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -174,7 +180,13 @@ const HomePage = () => {
       </motion.section>
 
       {/* System Architecture Section */}
-      <section className="relative py-20 px-6">
+      <motion.section 
+        className="relative py-20 px-6"
+        initial="initial"
+        whileInView="animate"
+        variants={fadeInUp}
+        viewport={{ once: true }}
+      >
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -241,17 +253,29 @@ const HomePage = () => {
             </motion.div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Flagship Mandate Section */}
-      <section className="relative py-20 px-6">
+      <motion.section 
+        className="relative py-20 px-6"
+        initial="initial"
+        whileInView="animate"
+        variants={fadeInUp}
+        viewport={{ once: true }}
+      >
         <div className="max-w-6xl mx-auto">
           <FlagshipMandate />
         </div>
-      </section>
+      </motion.section>
 
       {/* Featured Projects Section */}
-      <section className="relative py-20 px-6">
+      <motion.section 
+        className="relative py-20 px-6"
+        initial="initial"
+        whileInView="animate"
+        variants={fadeInUp}
+        viewport={{ once: true }}
+      >
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -301,10 +325,16 @@ const HomePage = () => {
             </button>
           </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Contact Section */}
-      <section className="relative py-20 px-6">
+      <motion.section 
+        className="relative py-20 px-6"
+        initial="initial"
+        whileInView="animate"
+        variants={fadeInUp}
+        viewport={{ once: true }}
+      >
         <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -328,7 +358,7 @@ const HomePage = () => {
             <AutonomousIntake />
           </motion.div>
         </div>
-      </section>
+      </motion.section>
     </div>
   );
 };
