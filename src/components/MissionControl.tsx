@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Terminal, Activity } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
