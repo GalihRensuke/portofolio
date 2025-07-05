@@ -1,12 +1,9 @@
 import React, { useEffect } from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useIntakeStore } from '../store/intakeStore';
 import { ArrowRight, ArrowLeft, CheckCircle, Zap, Clock, DollarSign, Target, Calendar, ExternalLink, Rocket } from 'lucide-react';
 
 const AutonomousIntake = () => {
-  const [focusedField, setFocusedField] = React.useState<string | null>(null);
-  const [validatedFields, setValidatedFields] = React.useState<Set<string>>(new Set());
-
   const {
     step,
     intent,
@@ -205,152 +202,51 @@ const AutonomousIntake = () => {
     return '48 hours';
   };
 
-  // Enhanced input component with holographic effects
-  const HolographicInput = ({ 
-    type = 'text', 
-    value, 
-    onChange, 
-    placeholder, 
-    label,
-    fieldId,
-    required = false,
-    rows 
-  }: {
-    type?: string;
-    value: string;
-    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-    placeholder: string;
-    label: string;
-    fieldId: string;
-    required?: boolean;
-    rows?: number;
-  }) => {
-    const isFocused = focusedField === fieldId;
-    const isValid = validatedFields.has(fieldId);
-    const hasValue = value.length > 0;
-    
-    const borderGlow = useMotionValue(0);
-    const labelY = useTransform(borderGlow, [0, 1], [0, -25]);
-    const labelScale = useTransform(borderGlow, [0, 1], [1, 0.85]);
-    
-    React.useEffect(() => {
-      borderGlow.set(isFocused || hasValue ? 1 : 0);
-    }, [isFocused, hasValue, borderGlow]);
-    
-    const handleFocus = () => {
-      setFocusedField(fieldId);
-    };
-    
-    const handleBlur = () => {
-      setFocusedField(null);
-      if (required && value.trim()) {
-        setValidatedFields(prev => new Set([...prev, fieldId]));
-        // Play validation sound effect (mock)
-        console.log('✓ Field validated:', fieldId);
-      }
-    };
-    
-    const InputComponent = rows ? 'textarea' : 'input';
-    
-    return (
-      <div className="relative">
-        <motion.label
-          className={`absolute left-4 pointer-events-none transition-all duration-200 font-medium z-10 ${
-            isFocused ? 'text-indigo-300' : hasValue ? 'text-white' : 'text-gray-300'
-          }`}
-          style={{
-            y: labelY,
-            scale: labelScale,
-            transformOrigin: 'left center',
-            top: hasValue || isFocused ? '8px' : '20px',
-            backgroundColor: hasValue || isFocused ? 'rgba(17, 24, 39, 0.9)' : 'transparent',
-            padding: hasValue || isFocused ? '0 4px' : '0',
-            borderRadius: '4px',
-          }}
-          animate={{
-            color: isFocused ? '#a5b4fc' : hasValue ? '#ffffff' : '#d1d5db'
-          }}
-        >
-          {label} {required && <span className="text-red-400">*</span>}
-        </motion.label>
-        
-        <motion.div
-          className="relative"
-          animate={{
-            scale: isFocused ? 1.02 : 1,
-          }}
-          transition={{ duration: 0.2 }}
-        >
-          <InputComponent
-            type={type}
-            value={value}
-            onChange={onChange}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-            placeholder={hasValue || isFocused ? "" : placeholder}
-            rows={rows}
-            className={`w-full px-4 py-3 pt-6 rounded-lg focus:outline-none transition-all duration-300 ${
-              rows ? 'resize-none' : ''
-            }`}
-            style={{
-              border: '2px solid transparent',
-              backgroundColor: 'rgba(17, 24, 39, 0.95)',
-              color: '#ffffff',
-              borderImage: isFocused 
-                ? 'linear-gradient(90deg, #6366f1, #8b5cf6, #6366f1) 1'
-                : 'none',
-              boxShadow: isFocused 
-                ? '0 0 0 1px rgba(99, 102, 241, 0.3), 0 0 20px rgba(99, 102, 241, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-                : 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
-            }}
-          />
-          
-          {/* Animated border effect */}
-          <motion.div
-            className="absolute inset-0 rounded-lg pointer-events-none"
-            animate={{
-              background: isFocused
-                ? 'linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.6), transparent)'
-                : 'transparent',
-              backgroundSize: isFocused ? '200% 100%' : '100% 100%',
-              backgroundPosition: isFocused ? ['0% 0%', '200% 0%'] : '0% 0%',
-            }}
-            transition={{
-              background: { duration: 0.3 },
-              backgroundPosition: { duration: 1.5, repeat: Infinity, ease: 'linear' }
-            }}
-            style={{
-              maskImage: 'linear-gradient(to right, transparent 1px, black 1px, black calc(100% - 1px), transparent calc(100% - 1px)), linear-gradient(to bottom, transparent 1px, black 1px, black calc(100% - 1px), transparent calc(100% - 1px))',
-              maskComposite: 'intersect',
-            }}
-          />
-          
-          {/* Validation checkmark */}
-          <AnimatePresence>
-            {isValid && (
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                exit={{ scale: 0, rotate: 180 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2"
-              >
-                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                  <CheckCircle className="w-4 h-4 text-white" />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-      </div>
-    );
-  };
-
   return (
-    <div className="max-w-2xl mx-auto">
+    <motion.div 
+      className="max-w-2xl mx-auto relative"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.8 }}
+    >
+      {/* Holographic Background Grid */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-lg">
+        <motion.div
+          className="absolute inset-0 opacity-20"
+          animate={{
+            backgroundImage: [
+              'linear-gradient(90deg, transparent 98%, rgba(99, 102, 241, 0.5) 100%), linear-gradient(0deg, transparent 98%, rgba(99, 102, 241, 0.5) 100%)',
+              'linear-gradient(90deg, transparent 98%, rgba(139, 92, 246, 0.5) 100%), linear-gradient(0deg, transparent 98%, rgba(139, 92, 246, 0.5) 100%)',
+              'linear-gradient(90deg, transparent 98%, rgba(99, 102, 241, 0.5) 100%), linear-gradient(0deg, transparent 98%, rgba(99, 102, 241, 0.5) 100%)'
+            ],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: 'easeInOut'
+          }}
+          style={{
+            backgroundSize: '30px 30px',
+          }}
+        />
+        
+        {/* Scanning Line Effect */}
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-b from-transparent via-indigo-500/20 to-transparent h-1"
+          animate={{
+            y: ['-100%', '100vh'],
+          }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+            ease: 'linear'
+          }}
+        />
+      </div>
+
       {/* Progress Indicator */}
       <motion.div 
-        className="flex items-center justify-center mb-8"
+        className="flex items-center justify-center mb-8 relative z-10"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
@@ -358,7 +254,7 @@ const AutonomousIntake = () => {
         {[1, 2, 3].map((stepNum) => (
           <React.Fragment key={stepNum}>
             <motion.div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium relative overflow-hidden ${
+              className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium relative overflow-hidden ${
                 stepNum <= step 
                   ? 'bg-indigo-500 text-white' 
                   : 'bg-gray-700 text-gray-400'
@@ -366,7 +262,7 @@ const AutonomousIntake = () => {
               animate={{
                 scale: stepNum === step ? [1, 1.1, 1] : 1,
                 boxShadow: stepNum === step 
-                  ? '0 0 20px rgba(99, 102, 241, 0.5)'
+                  ? '0 0 30px rgba(99, 102, 241, 0.8), 0 0 60px rgba(99, 102, 241, 0.4)'
                   : '0 0 0px rgba(99, 102, 241, 0)',
               }}
               transition={{
@@ -374,6 +270,13 @@ const AutonomousIntake = () => {
                 boxShadow: { duration: 0.3 }
               }}
             >
+              {/* Holographic Ring */}
+              <motion.div
+                className="absolute inset-0 border-2 border-indigo-400/50 rounded-full"
+                animate={{ rotate: stepNum === step ? 360 : 0 }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+              />
+              
               {stepNum <= step && (
                 <motion.div
                   className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-purple-500 rounded-full"
@@ -383,7 +286,7 @@ const AutonomousIntake = () => {
                   transition={{
                     duration: 3,
                     repeat: Infinity,
-                    ease: 'linear'
+                    ease: 'linear',
                   }}
                   style={{
                     background: 'conic-gradient(from 0deg, transparent, rgba(99, 102, 241, 0.3), transparent)',
@@ -394,7 +297,7 @@ const AutonomousIntake = () => {
             </motion.div>
             {stepNum < 3 && (
               <motion.div
-                className={`w-12 h-0.5 relative overflow-hidden ${
+                className={`w-16 h-1 relative overflow-hidden rounded-full ${
                   stepNum < step ? 'bg-indigo-500' : 'bg-gray-700'
                 }`}
                 animate={{
@@ -422,7 +325,8 @@ const AutonomousIntake = () => {
         ))}
       </motion.div>
 
-      <AnimatePresence mode="wait">
+      <div className="relative z-10">
+        <AnimatePresence mode="wait">
         {/* Step 1: Intent */}
         {step === 1 && (
           <motion.div
@@ -432,12 +336,47 @@ const AutonomousIntake = () => {
             exit={{ opacity: 0, x: -20 }}
             className="space-y-6"
           >
-            <div className="text-center mb-8">
+            {/* Holographic Panel Header */}
+            <motion.div 
+              className="text-center mb-8 relative p-6 rounded-lg border border-indigo-500/30 bg-gradient-to-r from-indigo-500/5 to-purple-500/5 backdrop-blur-sm"
+              animate={{
+                boxShadow: [
+                  '0 0 20px rgba(99, 102, 241, 0.2)',
+                  '0 0 40px rgba(99, 102, 241, 0.4)',
+                  '0 0 20px rgba(99, 102, 241, 0.2)'
+                ]
+              }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
               <h2 className="text-2xl font-bold text-white mb-2">What brings you here?</h2>
               <p className="text-gray-400">Select your primary intent</p>
-            </div>
+              
+              {/* Corner Indicators */}
+              {[0, 1, 2, 3].map((corner) => (
+                <motion.div
+                  key={corner}
+                  className={`absolute w-3 h-3 border-2 border-indigo-400 ${
+                    corner === 0 ? 'top-2 left-2 border-r-0 border-b-0' :
+                    corner === 1 ? 'top-2 right-2 border-l-0 border-b-0' :
+                    corner === 2 ? 'bottom-2 left-2 border-r-0 border-t-0' :
+                    'bottom-2 right-2 border-l-0 border-t-0'
+                  }`}
+                  animate={{
+                    opacity: [0.3, 1, 0.3],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    delay: corner * 0.5
+                  }}
+                />
+              ))}
+            </motion.div>
 
-            <div className="grid gap-4">
+            <motion.div 
+              className="grid gap-4"
+              style={{ perspective: '1000px' }}
+            >
               {[
                 { 
                   value: 'project', 
@@ -459,25 +398,52 @@ const AutonomousIntake = () => {
                   desc: 'I want to learn more about your work or explore potential collaboration' 
                 },
               ].map((option) => (
-                <button
+                <motion.button
                   key={option.value}
                   onClick={() => setIntent(option.value as any)}
-                  className={`p-6 text-left border rounded-lg transition-all ${
+                  className={`p-6 text-left border rounded-lg transition-all relative overflow-hidden group ${
                     intent === option.value
-                      ? 'border-indigo-500 bg-indigo-500/10'
+                      ? 'border-indigo-500 bg-indigo-500/20 shadow-lg shadow-indigo-500/25'
                       : option.highlight
-                      ? 'border-indigo-400/50 hover:border-indigo-400 bg-gradient-to-r from-indigo-500/5 to-purple-500/5'
+                      ? 'border-indigo-400/50 hover:border-indigo-400 bg-gradient-to-r from-indigo-500/10 to-purple-500/10'
                       : 'border-gray-700 hover:border-gray-600'
                   }`}
+                  whileHover={{ 
+                    scale: 1.02,
+                    rotateY: 2,
+                    z: 10
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  animate={{
+                    boxShadow: intent === option.value 
+                      ? '0 0 30px rgba(99, 102, 241, 0.3)'
+                      : '0 0 0px rgba(99, 102, 241, 0)'
+                  }}
                 >
+                  {/* Holographic Sweep Effect */}
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                    initial={{ x: '-100%' }}
+                    animate={{ x: intent === option.value ? '100%' : '-100%' }}
+                    transition={{ duration: 1.5, repeat: intent === option.value ? Infinity : 0 }}
+                  />
+                  
                   <div className="flex items-start space-x-4">
-                    <option.icon className={`h-6 w-6 mt-1 ${
+                    <motion.div
+                      animate={{ 
+                        rotate: intent === option.value ? [0, 5, -5, 0] : 0,
+                        scale: intent === option.value ? [1, 1.1, 1] : 1
+                      }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      <option.icon className={`h-6 w-6 mt-1 ${
                       intent === option.value 
                         ? 'text-indigo-400' 
                         : option.highlight 
                         ? 'text-indigo-400' 
                         : 'text-gray-400'
-                    }`} />
+                      }`} />
+                    </motion.div>
                     <div>
                       <h3 className={`font-semibold mb-1 ${
                         option.highlight ? 'text-indigo-300' : 'text-white'
@@ -492,9 +458,9 @@ const AutonomousIntake = () => {
                       <p className="text-sm text-gray-400">{option.desc}</p>
                     </div>
                   </div>
-                </button>
+                </motion.button>
               ))}
-            </div>
+            </motion.div>
           </motion.div>
         )}
 
@@ -629,14 +595,18 @@ const AutonomousIntake = () => {
 
             {/* Project Description */}
             <div>
-              <HolographicInput
+              <div className="relative">
+                <label className="block text-sm font-medium text-gray-300 mb-3">
+                  Challenge Description (Recommended for flagship projects)
+                </label>
+                <textarea
                 placeholder="Describe your challenge, current pain points, and desired outcomes. What would massive ROI look like for your organization?"
                 value={projectDescription}
                 onChange={(e) => setProjectDescription(e.target.value)}
-                label="Challenge Description (Recommended for flagship projects)"
-                fieldId="projectDescription"
                 rows={4}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none resize-none focus:ring-2 focus:ring-indigo-500/20"
               />
+              </div>
             </div>
           </motion.div>
         )}
@@ -657,107 +627,211 @@ const AutonomousIntake = () => {
 
             <div className="space-y-4">
               <div>
-                <HolographicInput
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Name *
+                  </label>
+                  <input
                   type="text"
                   value={contactInfo.name}
                   onChange={(e) => setContactInfo({ name: e.target.value })}
                   placeholder="Your name"
-                  label="Name"
-                  fieldId="name"
-                  required
+                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                 />
+                </div>
               </div>
 
               <div>
-                <HolographicInput
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Email *
+                  </label>
+                  <input
                   type="email"
                   value={contactInfo.email}
                   onChange={(e) => setContactInfo({ email: e.target.value })}
                   placeholder="your@email.com"
-                  label="Email"
-                  fieldId="email"
-                  required
+                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                 />
+                </div>
               </div>
 
               <div>
-                <HolographicInput
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Company (Optional)
+                  </label>
+                  <input
                   type="text"
                   value={contactInfo.company}
                   onChange={(e) => setContactInfo({ company: e.target.value })}
                   placeholder="Company name"
-                  label="Company (Optional)"
-                  fieldId="company"
+                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                 />
+                </div>
               </div>
             </div>
 
             {/* Real-time Lead Scoring Display */}
-            <div className="p-4 bg-gray-800/50 border border-gray-700 rounded-lg">
+            <motion.div 
+              className="p-4 bg-gray-800/50 border border-gray-700 rounded-lg relative overflow-hidden"
+              animate={{
+                borderColor: [
+                  'rgba(75, 85, 99, 1)',
+                  'rgba(99, 102, 241, 0.5)',
+                  'rgba(75, 85, 99, 1)'
+                ]
+              }}
+              transition={{ duration: 3, repeat: Infinity }}
+            >
+              {/* Data Stream Effect */}
+              <motion.div
+                className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-indigo-400 to-transparent"
+                animate={{
+                  x: ['-100%', '100%'],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: 'linear'
+                }}
+              />
+              
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-gray-300">Lead Score</span>
-                <span className="text-lg font-bold text-indigo-400">{calculateDisplayScore()}/100</span>
+                <motion.span 
+                  className="text-lg font-bold text-indigo-400 font-mono"
+                  animate={{
+                    textShadow: [
+                      '0 0 0px rgba(99, 102, 241, 0)',
+                      '0 0 10px rgba(99, 102, 241, 0.8)',
+                      '0 0 0px rgba(99, 102, 241, 0)'
+                    ]
+                  }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  {calculateDisplayScore()}/100
+                </motion.span>
               </div>
-              <div className="w-full bg-gray-700 rounded-full h-2">
-                <div 
-                  className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-300"
+              <div className="w-full bg-gray-700 rounded-full h-2 relative overflow-hidden">
+                <motion.div 
+                  className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full relative"
                   style={{ width: `${calculateDisplayScore()}%` }}
-                />
+                  animate={{
+                    boxShadow: [
+                      '0 0 0px rgba(99, 102, 241, 0)',
+                      '0 0 10px rgba(99, 102, 241, 0.6)',
+                      '0 0 0px rgba(99, 102, 241, 0)'
+                    ]
+                  }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                >
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                    animate={{
+                      x: ['-100%', '100%'],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: 'linear'
+                    }}
+                  />
+                </motion.div>
               </div>
               <div className="flex justify-between text-xs text-gray-400 mt-2">
                 <span>Priority: {getPriorityLabel()}</span>
                 <span>Response: {getResponseTime()}</span>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
 
       {/* Navigation */}
       <motion.div 
-        className="flex justify-between items-center mt-8"
+        className="flex justify-between items-center mt-8 relative z-10"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.3 }}
       >
-        <button
+        <motion.button
           onClick={handleBack}
           disabled={step === 1}
-          className="flex items-center px-4 py-2 text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105"
+          className="flex items-center px-4 py-2 text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 relative group"
+          whileHover={{ scale: step === 1 ? 1 : 1.05 }}
+          whileTap={{ scale: step === 1 ? 1 : 0.95 }}
         >
+          {step !== 1 && (
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-gray-600/20 to-gray-500/20 rounded-lg"
+              initial={{ opacity: 0 }}
+              whileHover={{ opacity: 1 }}
+            />
+          )}
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
-        </button>
+        </motion.button>
 
         <motion.button
           onClick={handleNext}
           disabled={!canProceed() || isSubmitting}
-          className="flex items-center px-6 py-3 bg-indigo-500 hover:bg-indigo-600 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all duration-200 relative overflow-hidden"
+          className="flex items-center px-6 py-3 bg-indigo-500 hover:bg-indigo-600 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all duration-200 relative overflow-hidden group"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           animate={{
-            boxShadow: canProceed() && !isSubmitting
-              ? '0 0 20px rgba(99, 102, 241, 0.4)'
+            boxShadow: canProceed() && !isSubmitting 
+              ? [
+                  '0 0 20px rgba(99, 102, 241, 0.4)',
+                  '0 0 40px rgba(99, 102, 241, 0.6)',
+                  '0 0 20px rgba(99, 102, 241, 0.4)'
+                ]
               : '0 0 0px rgba(99, 102, 241, 0)',
           }}
+          transition={{
+            boxShadow: { duration: 2, repeat: Infinity }
+          }}
         >
+          {/* Holographic Button Effects */}
           <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600"
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
             animate={{
               x: canProceed() && !isSubmitting ? ['-100%', '100%'] : '0%',
             }}
             transition={{
-              duration: 2,
+              duration: 1.5,
               repeat: Infinity,
               ease: 'linear'
             }}
-            style={{
-              background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
-            }}
           />
+          
+          {/* Corner Brackets */}
+          <motion.div
+            className="absolute top-1 left-1 w-2 h-2 border-l-2 border-t-2 border-white/50"
+            animate={{
+              opacity: canProceed() && !isSubmitting ? [0.5, 1, 0.5] : 0.5,
+            }}
+            transition={{ duration: 1, repeat: Infinity }}
+          />
+          <motion.div
+            className="absolute top-1 right-1 w-2 h-2 border-r-2 border-t-2 border-white/50"
+            animate={{
+              opacity: canProceed() && !isSubmitting ? [0.5, 1, 0.5] : 0.5,
+            }}
+            transition={{ duration: 1, repeat: Infinity, delay: 0.5 }}
+          />
+          
           <span className="relative z-10">
           {isSubmitting ? (
-            'Processing...'
+            <>
+              <motion.span
+                animate={{ opacity: [1, 0.5, 1] }}
+                transition={{ duration: 1, repeat: Infinity }}
+              >
+                Processing...
+              </motion.span>
+            </>
           ) : step === 3 ? (
             'Submit'
           ) : (
@@ -769,7 +843,7 @@ const AutonomousIntake = () => {
           </span>
         </motion.button>
       </motion.div>
-    </div>
+    </motion.div>
   );
 };
 
