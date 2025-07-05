@@ -23,10 +23,10 @@ const MissionControl: React.FC<MissionControlProps> = ({ additionalText }) => {
   const fetchLatestMission = async () => {
     setLoading(true);
     setError(null);
-    const n8nWebhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL;
+    const missionLogApiUrl = import.meta.env.VITE_N8N_MISSION_LOG_API_URL;
 
-    if (!n8nWebhookUrl) {
-      console.warn("VITE_N8N_WEBHOOK_URL is not set. Using mock data.");
+    if (!missionLogApiUrl) {
+      console.warn("VITE_N8N_MISSION_LOG_API_URL is not set. Using mock data.");
       setCurrentMission({
         id: 'mock_1',
         timestamp: new Date().toISOString(),
@@ -39,7 +39,7 @@ const MissionControl: React.FC<MissionControlProps> = ({ additionalText }) => {
     }
 
     try {
-      const response = await fetch(`${n8nWebhookUrl}/mission_logs/latest_active`);
+      const response = await fetch(`${missionLogApiUrl}/latest_active`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
