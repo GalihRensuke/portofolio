@@ -10,20 +10,20 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "@tsparticles/engine": "^3.0.3",
+    "@tsparticles/react": "^3.0.0",
+    "@tsparticles/slim": "^3.0.3",
+    "cmdk": "^0.2.0",
+    "date-fns": "^3.0.6",
+    "framer-motion": "^11.0.6",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.22.0",
-    "framer-motion": "^11.0.6",
-    "@tsparticles/react": "^3.0.0",
-    "@tsparticles/slim": "^3.0.3",
-    "@tsparticles/engine": "^3.0.3",
-    "@supabase/supabase-js": "^2.39.0",
+    "react-router-dom": "^7.6.3",
     "reactflow": "^11.10.4",
-    "date-fns": "^3.0.6",
-    "zustand": "^4.4.7",
-    "cmdk": "^0.2.0",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "zustand": "^4.4.7"
   },
   "devDependencies": {
     "@types/react": "^18.3.5",
