@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Terminal, Zap, Brain, Shield, Database } from 'lucide-react';
+import { User, Briefcase, Code, Database, Brain, Shield } from 'lucide-react';
 import { getClearanceLevel, getEngagementScore } from '../utils/gamification';
 
 interface BootSequenceProps {
@@ -28,14 +28,14 @@ const SystemBootSequence: React.FC<BootSequenceProps> = ({ onBootComplete }) => 
   }, []);
 
   const bootSteps = [
-    { text: "INITIALIZING GALYARDER_OS v4.3...", icon: Terminal, delay: 0 },
-    { text: "LOADING NEURAL PATHWAYS...", icon: Brain, delay: 400 },
-    { text: `CLEARANCE LEVEL: ${gamificationStats.level.toUpperCase()} [${gamificationStats.score} POINTS]`, icon: Shield, delay: 800 },
-    { text: "AI_CONCIERGE... [ONLINE]", icon: Zap, delay: 800 },
+    { text: "LOADING PORTFOLIO INTERFACE...", icon: User, delay: 0 },
+    { text: "INITIALIZING PROJECT MODULES...", icon: Briefcase, delay: 400 },
+    { text: `ACCESS LEVEL: ${gamificationStats.level.toUpperCase()} [${gamificationStats.score} POINTS]`, icon: Shield, delay: 800 },
+    { text: "AI CONCIERGE... [READY]", icon: Brain, delay: 800 },
     { text: "SECURITY PROTOCOLS... [ACTIVE]", icon: Shield, delay: 1200 },
-    { text: "KNOWLEDGE_ARSENAL... [SYNCHRONIZED]", icon: Database, delay: 1600 },
-    { text: "RENDERING REALITY...", icon: Terminal, delay: 2000 },
-    { text: `SYSTEM READY. WELCOME BACK, ${gamificationStats.level.toUpperCase()}.`, icon: Zap, delay: 2400 }
+    { text: "KNOWLEDGE BASE... [ONLINE]", icon: Database, delay: 1600 },
+    { text: "RENDERING INTERFACE...", icon: Code, delay: 2000 },
+    { text: `WELCOME TO GALYARDER'S PORTFOLIO.`, icon: User, delay: 2400 }
   ];
 
   useEffect(() => {
@@ -63,14 +63,14 @@ const SystemBootSequence: React.FC<BootSequenceProps> = ({ onBootComplete }) => 
           transition={{ duration: 0.8 }}
           className="fixed inset-0 z-[9999] bg-black flex items-center justify-center"
         >
-          {/* Matrix-style background */}
+          {/* Professional background */}
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-900/20 via-black to-black" />
           
-          {/* Grid overlay */}
+          {/* Subtle grid overlay */}
           <div className="absolute inset-0 bg-[linear-gradient(rgba(99,102,241,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.1)_1px,transparent_1px)] bg-[size:50px_50px] opacity-30" />
 
           <div className="relative z-10 max-w-2xl mx-auto px-6">
-            {/* Logo/System Icon */}
+            {/* Logo/Portfolio Icon */}
             <motion.div
               initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
@@ -90,8 +90,16 @@ const SystemBootSequence: React.FC<BootSequenceProps> = ({ onBootComplete }) => 
                 transition={{ delay: 0.5, duration: 0.8 }}
                 className="text-4xl font-bold text-white font-mono tracking-wider"
               >
-                GALYARDER_OS
+                GALYARDER
               </motion.h1>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7, duration: 0.8 }}
+                className="text-lg text-indigo-400 font-mono tracking-wide mt-2"
+              >
+                SYSTEMS ARCHITECT
+              </motion.p>
             </motion.div>
 
             {/* Boot sequence steps */}
@@ -136,7 +144,7 @@ const SystemBootSequence: React.FC<BootSequenceProps> = ({ onBootComplete }) => 
                     
                     <motion.span
                       className={`text-sm ${
-                        isActive ? 'text-green-400' : 'text-gray-600'
+                        isActive ? (index === 2 ? gamificationStats.color : 'text-green-400') : 'text-gray-600'
                       }`}
                       animate={isCurrent && index !== 2 ? {
                         textShadow: [
@@ -145,9 +153,6 @@ const SystemBootSequence: React.FC<BootSequenceProps> = ({ onBootComplete }) => 
                           "0 0 0px rgba(34, 197, 94, 0)"
                         ]
                       } : {}}
-                      className={`text-sm ${
-                        isActive ? (index === 2 ? gamificationStats.color : 'text-green-400') : 'text-gray-600'
-                      }`}
                       transition={{ duration: 1, repeat: Infinity }}
                     >
                       {step.text}
@@ -206,14 +211,14 @@ const SystemBootSequence: React.FC<BootSequenceProps> = ({ onBootComplete }) => 
                   }`}
                 >
                   <div className={`text-lg font-bold ${gamificationStats.color} mb-2`}>
-                    CLEARANCE LEVEL: {gamificationStats.level.toUpperCase()}
+                    ACCESS LEVEL: {gamificationStats.level.toUpperCase()}
                   </div>
                   <div className="text-sm text-gray-400">
-                    Engagement Score: {gamificationStats.score} points
+                    Portfolio Score: {gamificationStats.score} points
                   </div>
                   {gamificationStats.level === 'Architect' && (
                     <div className="text-xs text-yellow-400 mt-2">
-                      ★ MAXIMUM CLEARANCE ACHIEVED ★
+                      ★ MAXIMUM ACCESS ACHIEVED ★
                     </div>
                   )}
                 </motion.div>
@@ -230,7 +235,7 @@ const SystemBootSequence: React.FC<BootSequenceProps> = ({ onBootComplete }) => 
                   transition={{ duration: 2, repeat: Infinity }}
                   className="text-indigo-400 font-mono text-lg"
                 >
-                  ENTERING SENTIENT SPACE...
+                  ENTERING PORTFOLIO INTERFACE...
                 </motion.div>
               </motion.div>
             )}
