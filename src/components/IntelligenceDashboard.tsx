@@ -81,81 +81,83 @@ const IntelligenceDashboard = () => {
       }
       
       // If no analytics API or fetch failed, use demo data
-      throw new Error('Analytics API not configured or unavailable');
+      console.warn('Analytics API not configured, using demo data');
+      loadMockData();
       
     } catch (error) {
       console.warn('Using demo dashboard data:', error);
-      
-      // Demo data with realistic metrics based on time range
-      const getMetricsForTimeRange = () => {
-        const baseMetrics = {
-          '24h': {
-            visitors: 89,
-            intakeStarted: 6,
-            intakeCompleted: 4,
-            qualified: 3,
-            scheduled: 1,
-            sessions: 12,
-            promptsGenerated: 28,
-            queries: 15,
-          },
-          '7d': {
-            visitors: 1247,
-            intakeStarted: 89,
-            intakeCompleted: 67,
-            qualified: 45,
-            scheduled: 23,
-            sessions: 156,
-            promptsGenerated: 342,
-            queries: 234,
-          },
-          '30d': {
-            visitors: 4892,
-            intakeStarted: 312,
-            intakeCompleted: 245,
-            qualified: 167,
-            scheduled: 89,
-            sessions: 578,
-            promptsGenerated: 1247,
-            queries: 892,
-          }
-        };
-
-        const data = baseMetrics[timeRange];
-        
-        return {
-          funnelConversion: {
-            visitors: data.visitors,
-            intakeStarted: data.intakeStarted,
-            intakeCompleted: data.intakeCompleted,
-            qualified: data.qualified,
-            scheduled: data.scheduled,
-          },
-          liveFireUsage: {
-            sessions: data.sessions,
-            promptsGenerated: data.promptsGenerated,
-            avgSessionTime: 4.2,
-            topTemplates: ['Chain-of-Thought Analysis', 'System Architecture', 'Code Optimization'],
-          },
-          aiQueries: {
-            totalQueries: data.queries,
-            topQueries: ['AirdropOps architecture', 'automation approach', 'collaboration inquiry'],
-            avgResponseTime: 1.8,
-            satisfactionRate: 94,
-          },
-          campaignPerformance: {
-            'defi_analysis': { visitors: Math.round(data.visitors * 0.19), conversions: Math.round(data.qualified * 0.27), conversionRate: 5.1 },
-            'ai_agent_deploy': { visitors: Math.round(data.visitors * 0.15), conversions: Math.round(data.qualified * 0.40), conversionRate: 9.5 },
-            'automation_workflow': { visitors: Math.round(data.visitors * 0.13), conversions: Math.round(data.qualified * 0.18), conversionRate: 5.1 },
-            'organic': { visitors: Math.round(data.visitors * 0.53), conversions: Math.round(data.qualified * 0.64), conversionRate: 4.3 },
-          },
-        };
-      };
-
-      setMetrics(getMetricsForTimeRange());
+      loadMockData();
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadMockData = () => {
+    // Demo data with realistic metrics based on time range
+    const baseMetrics = {
+      '24h': {
+        visitors: 89,
+        intakeStarted: 6,
+        intakeCompleted: 4,
+        qualified: 3,
+        scheduled: 1,
+        sessions: 12,
+        promptsGenerated: 28,
+        queries: 15,
+      },
+      '7d': {
+        visitors: 1247,
+        intakeStarted: 89,
+        intakeCompleted: 67,
+        qualified: 45,
+        scheduled: 23,
+        sessions: 156,
+        promptsGenerated: 342,
+        queries: 234,
+      },
+      '30d': {
+        visitors: 4892,
+        intakeStarted: 312,
+        intakeCompleted: 245,
+        qualified: 167,
+        scheduled: 89,
+        sessions: 578,
+        promptsGenerated: 1247,
+        queries: 892,
+      }
+    };
+
+    const data = baseMetrics[timeRange];
+    
+    const mockMetrics = {
+      funnelConversion: {
+        visitors: data.visitors,
+        intakeStarted: data.intakeStarted,
+        intakeCompleted: data.intakeCompleted,
+        qualified: data.qualified,
+        scheduled: data.scheduled,
+      },
+      liveFireUsage: {
+        sessions: data.sessions,
+        promptsGenerated: data.promptsGenerated,
+        avgSessionTime: 4.2,
+        topTemplates: ['Chain-of-Thought Analysis', 'System Architecture', 'Code Optimization'],
+      },
+      aiQueries: {
+        totalQueries: data.queries,
+        topQueries: ['AirdropOps architecture', 'automation approach', 'collaboration inquiry'],
+        avgResponseTime: 1.8,
+        satisfactionRate: 94,
+      },
+      campaignPerformance: {
+        'defi_analysis': { visitors: Math.round(data.visitors * 0.19), conversions: Math.round(data.qualified * 0.27), conversionRate: 5.1 },
+        'ai_agent_deploy': { visitors: Math.round(data.visitors * 0.15), conversions: Math.round(data.qualified * 0.40), conversionRate: 9.5 },
+        'automation_workflow': { visitors: Math.round(data.visitors * 0.13), conversions: Math.round(data.qualified * 0.18), conversionRate: 5.1 },
+        'organic': { visitors: Math.round(data.visitors * 0.53), conversions: Math.round(data.qualified * 0.64), conversionRate: 4.3 },
+      },
+    };
+
+    setMetrics(mockMetrics);
   };
 
   const handleMetricClick = (metricType: string, value: string, subtitle: string) => {

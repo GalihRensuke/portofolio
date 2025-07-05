@@ -141,17 +141,11 @@ const DashboardPage = () => {
         )}
 
         {/* Tab Description */}
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="text-center mb-8"
-        >
+        <div className="text-center mb-8">
           <p className="text-gray-400">
             {tabs.find(tab => tab.id === activeTab)?.description}
           </p>
-        </motion.div>
+        </div>
 
         {/* Tab Content */}
         <motion.div
