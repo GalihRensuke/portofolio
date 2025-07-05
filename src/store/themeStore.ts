@@ -6,6 +6,7 @@ export interface ThemeState {
   currentSkin: ThemeSkin;
   isArchitectLevel: boolean;
   hasUnlockedReality: boolean;
+  isDarkMode: boolean;
 }
 
 interface ThemeActions {
@@ -13,12 +14,14 @@ interface ThemeActions {
   setArchitectLevel: (isArchitect: boolean) => void;
   unlockReality: () => void;
   applyTheme: () => void;
+  toggleTheme: () => void;
 }
 
 const initialState: ThemeState = {
   currentSkin: 'galyarderos',
   isArchitectLevel: false,
   hasUnlockedReality: false,
+  isDarkMode: false,
 };
 
 export const useThemeStore = create<ThemeState & ThemeActions>((set, get) => ({
@@ -42,15 +45,29 @@ export const useThemeStore = create<ThemeState & ThemeActions>((set, get) => ({
     localStorage.setItem('galyarder_reality_unlocked', 'true');
   },
 
+  toggleTheme: () => {
+    const { isDarkMode } = get();
+    set({ isDarkMode: !isDarkMode });
+    document.documentElement.classList.toggle('dark');
+    localStorage.setItem('galyarder_dark_mode', !isDarkMode ? 'true' : 'false');
+  },
+
   applyTheme: () => {
-    const { currentSkin } = get();
+    const { currentSkin, isDarkMode } = get();
     const root = document.documentElement;
     
     // Remove all theme classes
     root.classList.remove('theme-galyarderos', 'theme-blueprint', 'theme-terminal', 'theme-quantum');
     
-    // Apply new theme
+    // Add new theme class
     root.classList.add(`theme-${currentSkin}`);
+    
+    // Apply dark mode if enabled
+    if (isDarkMode) {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
   },
 }));
 
