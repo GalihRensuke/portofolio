@@ -45,6 +45,9 @@ const ProjectCaseStudy: React.FC<ProjectCaseStudyProps> = ({
   const rotateY = useTransform(mouseX, [-300, 300], [-15, 15]);
   
   const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    // Only enable 3D effects on non-mobile devices
+    if (window.innerWidth < 768) return;
+    
     const rect = event.currentTarget.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
@@ -398,7 +401,7 @@ const automateDecision = async (context) => {
         style={{ perspective: '1000px' }}
       >
         <motion.div
-          className="relative border border-gray-200 dark:border-gray-800 rounded-lg p-6 transition-all duration-300 overflow-hidden"
+          className="relative border border-gray-200 dark:border-gray-800 rounded-lg p-4 sm:p-6 transition-all duration-300 overflow-hidden"
           style={{
             rotateX: isHovered ? rotateX : 0,
             rotateY: isHovered ? rotateY : 0,
@@ -449,14 +452,14 @@ const automateDecision = async (context) => {
           />
 
           <div className="relative z-10">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="text-xl font-bold mb-2 text-indigo-400 group-hover:text-indigo-300 transition-colors">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 space-y-3 sm:space-y-0">
+              <div className="flex-1">
+                <h3 className="text-lg sm:text-xl font-bold mb-2 text-indigo-400 group-hover:text-indigo-300 transition-colors">
                   {project.project_name}
                   {/* Easter Egg Icon */}
                   {easterEgg && (
                     <motion.button
-                      className="ml-3 relative"
+                      className="ml-2 sm:ml-3 relative"
                       onMouseEnter={() => setShowTooltip(true)}
                       onMouseLeave={() => setShowTooltip(false)}
                       whileHover={{ scale: 1.2 }}
@@ -471,7 +474,7 @@ const automateDecision = async (context) => {
                             initial={{ opacity: 0, y: 10, scale: 0.8 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 10, scale: 0.8 }}
-                            className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 p-3 bg-gray-800 border border-yellow-400/30 rounded-lg shadow-xl z-50"
+                            className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 sm:w-64 p-3 bg-gray-800 border border-yellow-400/30 rounded-lg shadow-xl z-50"
                           >
                             <div className="text-yellow-400 font-semibold text-sm mb-1">
                               {easterEgg.fact}
@@ -492,7 +495,7 @@ const automateDecision = async (context) => {
                 </span>
               </div>
               
-              <div className="flex space-x-2">
+              <div className="flex space-x-2 self-start sm:self-auto">
                 <Github className="h-5 w-5 text-gray-400 hover:text-indigo-400 cursor-pointer transition-colors" />
                 <ExternalLink className="h-5 w-5 text-gray-400 hover:text-indigo-400 cursor-pointer transition-colors" />
               </div>
@@ -504,7 +507,7 @@ const automateDecision = async (context) => {
                 <Target className="h-4 w-4 text-indigo-400 mr-2" />
                 <span className="text-sm font-semibold text-gray-300">Objective</span>
               </div>
-              <p className="text-gray-300 text-sm leading-relaxed">{project.objective}</p>
+              <p className="text-gray-300 text-sm sm:text-base leading-relaxed">{project.objective}</p>
             </div>
 
             {/* Key Metrics - Conditional based on persona */}
@@ -516,7 +519,7 @@ const automateDecision = async (context) => {
                 </div>
                 <div className="grid grid-cols-1 gap-2">
                   {Object.entries(project.metrics).map(([key, value]) => (
-                    <div key={key} className="flex justify-between items-center text-sm">
+                    <div key={key} className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-sm space-y-1 sm:space-y-0">
                       <span className="text-gray-400 capitalize">{key.replace('_', ' ')}</span>
                       <div className="flex items-center space-x-2">
                         <span className="text-green-400 font-medium">{value}</span>
@@ -556,13 +559,13 @@ const automateDecision = async (context) => {
                           "{testimonial.quote}"
                         </p>
                       </div>
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-1 sm:space-y-0">
                         <div className="text-xs text-gray-400">
                           <span className="font-medium text-gray-300">{testimonial.author}</span>
                           <span className="mx-1">•</span>
                           <span>{testimonial.role}</span>
-                          <span className="mx-1">•</span>
-                          <span>{testimonial.company}</span>
+                          <span className="mx-1 hidden sm:inline">•</span>
+                          <span className="block sm:inline">{testimonial.company}</span>
                         </div>
                         {testimonial.impact && (
                           <div className="text-xs text-purple-400 font-medium">
@@ -597,22 +600,22 @@ const automateDecision = async (context) => {
             {/* Expandable Details */}
             <button
               onClick={() => setShowDetails(!showDetails)}
-              className="flex items-center text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
+              className="flex items-center text-sm sm:text-base text-indigo-400 hover:text-indigo-300 transition-colors w-full sm:w-auto justify-start"
             >
-              <Zap className="h-4 w-4 mr-1" />
+              <Zap className="h-4 w-4 mr-1 flex-shrink-0" />
               System Architecture
-              <ArrowRight className={`h-3 w-3 ml-1 transition-transform ${showDetails ? 'rotate-90' : ''}`} />
+              <ArrowRight className={`h-3 w-3 ml-1 transition-transform ${showDetails ? 'rotate-90' : ''} flex-shrink-0`} />
             </button>
 
             {/* Deep Dive Technical Button */}
             {archContent && (
               <button
                 onClick={() => setShowArchModal(true)}
-                className="flex items-center text-sm text-purple-400 hover:text-purple-300 transition-colors mt-2"
+                className="flex items-center text-sm sm:text-base text-purple-400 hover:text-purple-300 transition-colors mt-2 w-full sm:w-auto justify-start"
               >
-                <Code className="h-4 w-4 mr-1" />
+                <Code className="h-4 w-4 mr-1 flex-shrink-0" />
                 [Lihat Arsitektur Inti]
-                <ExternalLink className="h-3 w-3 ml-1" />
+                <ExternalLink className="h-3 w-3 ml-1 flex-shrink-0" />
               </button>
             )}
             <motion.div
@@ -622,13 +625,13 @@ const automateDecision = async (context) => {
               className="overflow-hidden"
             >
               <div className="pt-3 border-t border-gray-700 mt-3">
-                <p className="text-sm text-gray-300 leading-relaxed mb-3">
+                <p className="text-sm sm:text-base text-gray-300 leading-relaxed mb-3">
                   {project.system_architecture}
                 </p>
                 {project.visual_flow && (
                   <div className="bg-gray-800 p-3 rounded border border-gray-700">
                     <div className="text-xs text-gray-400 mb-1">Data Flow</div>
-                    <div className="text-sm text-indigo-300 font-mono">
+                    <div className="text-xs sm:text-sm text-indigo-300 font-mono overflow-x-auto">
                       {project.visual_flow}
                     </div>
                   </div>
@@ -659,7 +662,7 @@ const automateDecision = async (context) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4"
             onClick={() => setShowArchModal(false)}
           >
             <motion.div
@@ -670,26 +673,26 @@ const automateDecision = async (context) => {
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-gray-700">
+              <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-700">
                 <div className="flex items-center space-x-3">
-                  <Code className="h-6 w-6 text-purple-400" />
-                  <h3 className="text-xl font-bold text-white">{archContent.title}</h3>
+                  <Code className="h-5 w-5 sm:h-6 sm:w-6 text-purple-400" />
+                  <h3 className="text-lg sm:text-xl font-bold text-white truncate">{archContent.title}</h3>
                 </div>
                 <button
                   onClick={() => setShowArchModal(false)}
-                  className="text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-gray-800"
+                  className="text-gray-400 hover:text-white transition-colors p-1 sm:p-2 rounded-lg hover:bg-gray-800 flex-shrink-0"
                 >
-                  <X className="h-5 w-5" />
+                  <X className="h-4 w-4 sm:h-5 sm:w-5" />
                 </button>
               </div>
 
               {/* Content */}
-              <div className="p-6 space-y-6">
+              <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                 {/* Architecture Diagram */}
                 <div>
-                  <h4 className="text-lg font-semibold text-white mb-3">System Diagram</h4>
-                  <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-                    <pre className="text-sm text-gray-300 font-mono whitespace-pre overflow-x-auto">
+                  <h4 className="text-base sm:text-lg font-semibold text-white mb-3">System Diagram</h4>
+                  <div className="bg-gray-800 p-2 sm:p-4 rounded-lg border border-gray-700">
+                    <pre className="text-xs sm:text-sm text-gray-300 font-mono whitespace-pre overflow-x-auto">
                       {archContent.diagram}
                     </pre>
                   </div>
@@ -697,18 +700,18 @@ const automateDecision = async (context) => {
 
                 {/* Code Example */}
                 <div>
-                  <h4 className="text-lg font-semibold text-white mb-3">Implementation Example</h4>
-                  <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-                    <pre className="text-sm text-green-400 font-mono whitespace-pre overflow-x-auto">
+                  <h4 className="text-base sm:text-lg font-semibold text-white mb-3">Implementation Example</h4>
+                  <div className="bg-gray-800 p-2 sm:p-4 rounded-lg border border-gray-700">
+                    <pre className="text-xs sm:text-sm text-green-400 font-mono whitespace-pre overflow-x-auto">
                       {archContent.codeSnippet}
                     </pre>
                   </div>
                 </div>
 
                 {/* Technical Notes */}
-                <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                <div className="p-3 sm:p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
                   <h4 className="text-sm font-semibold text-purple-400 mb-2">Architecture Notes</h4>
-                  <p className="text-sm text-gray-300">
+                  <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">
                     This implementation demonstrates async-first patterns, modular design, and horizontal scaling capabilities.
                     Each component can be developed, tested, and deployed independently.
                   </p>

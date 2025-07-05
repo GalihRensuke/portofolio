@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import Navigation from './components/Navigation';
@@ -15,11 +15,12 @@ import KnowledgeArsenalPage from './pages/KnowledgeArsenalPage';
 import { useUserBehaviorStore } from './store/userBehaviorStore';
 import { useThemeStore } from './store/themeStore';
 
+// Optimized page variants - reduced blur to improve performance
 const pageVariants = {
   initial: {
     opacity: 0,
-    scale: 0.8,
-    filter: "blur(10px)",
+    scale: 0.95,
+    filter: "blur(5px)", // Reduced from 10px
   },
   in: {
     opacity: 1,
@@ -28,20 +29,41 @@ const pageVariants = {
   },
   out: {
     opacity: 0,
-    scale: 1.2,
-    filter: "blur(10px)",
+    scale: 1.05, // Reduced from 1.2
+    filter: "blur(5px)", // Reduced from 10px
   }
 };
 
 const pageTransition = {
   type: "tween",
   ease: "anticipate",
-  duration: 0.8
+  duration: 0.5 // Reduced from 0.8
 };
 
-// Particle effect for page transitions
+// Optimized particle effect with reduced count and better cleanup
 const TransitionParticles: React.FC<{ isTransitioning: boolean }> = ({ isTransitioning }) => {
-  if (!isTransitioning) return null;
+  const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number }>>([]);
+
+  useEffect(() => {
+    if (isTransitioning) {
+      // Reduced particle count from 50 to 20
+      const newParticles = Array.from({ length: 20 }, (_, i) => ({
+        id: i,
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+      }));
+      setParticles(newParticles);
+
+      // Cleanup particles after animation
+      const cleanup = setTimeout(() => {
+        setParticles([]);
+      }, 800);
+
+      return () => clearTimeout(cleanup);
+    }
+  }, [isTransitioning]);
+
+  if (!isTransitioning || particles.length === 0) return null;
 
   return (
     <motion.div
@@ -50,13 +72,13 @@ const TransitionParticles: React.FC<{ isTransitioning: boolean }> = ({ isTransit
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-40 pointer-events-none"
     >
-      {Array.from({ length: 50 }).map((_, i) => (
+      {particles.map((particle) => (
         <motion.div
-          key={i}
+          key={particle.id}
           className="absolute w-1 h-1 bg-indigo-400 rounded-full"
           initial={{
-            x: Math.random() * window.innerWidth,
-            y: Math.random() * window.innerHeight,
+            x: particle.x,
+            y: particle.y,
             scale: 0,
             opacity: 0,
           }}
@@ -68,7 +90,7 @@ const TransitionParticles: React.FC<{ isTransitioning: boolean }> = ({ isTransit
           }}
           transition={{
             duration: 0.8,
-            delay: i * 0.01,
+            delay: particle.id * 0.01,
             ease: "easeInOut",
           }}
         />
@@ -90,23 +112,25 @@ function AppContent() {
     applyTheme();
   }, [applyTheme]);
 
-  // Track page changes
+  // Track page changes with cleanup
   useEffect(() => {
     if (location.pathname !== previousPath) {
       setIsTransitioning(true);
-      setTimeout(() => setIsTransitioning(false), 800);
+      const transitionTimer = setTimeout(() => setIsTransitioning(false), 500); // Reduced from 800
       setPreviousPath(location.pathname);
+      
+      return () => clearTimeout(transitionTimer);
     }
     setCurrentPage(location.pathname);
   }, [location.pathname, setCurrentPage, previousPath]);
 
-  // Track time on page
+  // Optimized time tracking with proper cleanup
   useEffect(() => {
     const startTime = Date.now();
     const interval = setInterval(() => {
       const timeOnPage = Date.now() - startTime;
       setTimeOnPage(timeOnPage);
-    }, 1000);
+    }, 5000); // Reduced frequency from 1000ms to 5000ms
 
     return () => clearInterval(interval);
   }, [location.pathname, setTimeOnPage]);
@@ -229,15 +253,15 @@ function App() {
   const [showBootSequence, setShowBootSequence] = useState(false);
   const [isBootComplete, setIsBootComplete] = useState(true); // Set to true by default
 
+  const handleBootComplete = useCallback(() => {
+    setShowBootSequence(false);
+    setIsBootComplete(true);
+  }, []);
+
   useEffect(() => {
     // Boot sequence is now optional - only show if explicitly triggered
     // setShowBootSequence(true);
   }, []);
-
-  const handleBootComplete = () => {
-    setShowBootSequence(false);
-    setIsBootComplete(true);
-  };
 
   return (
     <>
