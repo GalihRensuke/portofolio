@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, useDragControls, PanInfo } from 'framer-motion';
 import { MessageCircle, X, Send, ArrowRight, Terminal, Zap, Move } from 'lucide-react';
 import { useProactiveAITrigger } from '../hooks/useProactiveAITrigger';
@@ -143,6 +143,7 @@ const generateIntelligentFallback = (message: string): string => {
   return "I can provide detailed information about Galyarder's projects, architectural principles, and collaboration opportunities. The current priority is identifying a flagship partner for a high-impact project. What specific aspect would you like to explore?";
 };
 
+// Optimized LogoGlyph component with reduced animations
 const LogoGlyph = ({ isActive, onClick, isDragging }: { isActive: boolean; onClick: () => void; isDragging: boolean }) => {
   return (
     <motion.button
@@ -152,106 +153,56 @@ const LogoGlyph = ({ isActive, onClick, isDragging }: { isActive: boolean; onCli
       whileTap={{ scale: isDragging ? 1 : 0.95 }}
       style={{ cursor: isDragging ? 'grabbing' : 'pointer' }}
     >
-      {/* Logo Container with Animations */}
+      {/* Simplified Logo Container */}
       <motion.div
         className="relative w-full h-full rounded-xl overflow-hidden shadow-lg"
         animate={{
-          rotateY: isActive ? [0, 5, -5, 0] : [0, 2, -2, 0],
-          scale: isActive ? [1, 1.02, 1] : [1, 1.01, 1],
+          scale: isActive ? [1, 1.01, 1] : [1, 1.005, 1], // Reduced animation intensity
         }}
         transition={{
-          duration: isActive ? 3 : 6,
+          duration: isActive ? 4 : 8, // Increased duration to reduce frequency
           repeat: Infinity,
           ease: "easeInOut"
         }}
       >
-        {/* Background with gradient animation */}
+        {/* Simplified Background */}
         <motion.div
-          className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-xl"
+          className="absolute inset-0 bg-gradient-to-br from-indigo-500/15 to-purple-500/15 rounded-xl"
           animate={{
-            opacity: isActive ? [0.2, 0.4, 0.2] : [0.1, 0.2, 0.1],
+            opacity: isActive ? [0.15, 0.25, 0.15] : [0.1, 0.15, 0.1], // Reduced opacity for better performance
           }}
           transition={{
-            duration: 2,
+            duration: 3, // Increased duration
             repeat: Infinity,
             ease: "easeInOut"
           }}
         />
         
         {/* Logo Image */}
-        <motion.img
+        <img
           src="/logo copy.png"
           alt="Galyarder Logo"
           className="w-full h-full object-contain p-1.5 sm:p-2"
-          animate={{
-            filter: isActive 
-              ? ["brightness(1) saturate(1)", "brightness(1.1) saturate(1.2)", "brightness(1) saturate(1)"]
-              : ["brightness(0.9) saturate(0.8)", "brightness(1) saturate(1)", "brightness(0.9) saturate(0.8)"]
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: "easeInOut"
+          style={{
+            filter: isActive ? 'brightness(1.05) saturate(1.1)' : 'brightness(0.95) saturate(0.9)'
           }}
         />
 
-        {/* Animated border */}
-        <motion.div
-          className="absolute inset-0 border-2 border-indigo-500/30 rounded-xl"
-          animate={{
-            borderColor: isActive 
-              ? ["rgba(99, 102, 241, 0.3)", "rgba(99, 102, 241, 0.6)", "rgba(99, 102, 241, 0.3)"]
-              : ["rgba(99, 102, 241, 0.2)", "rgba(99, 102, 241, 0.4)", "rgba(99, 102, 241, 0.2)"]
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
+        {/* Simplified border */}
+        <div className="absolute inset-0 border-2 border-indigo-500/30 rounded-xl" />
       </motion.div>
 
-      {/* Glow effect */}
-      <motion.div
-        className="absolute inset-0 bg-gradient-to-br from-indigo-400/20 to-purple-600/20 rounded-xl blur-md -z-10"
-        animate={{
-          opacity: isActive ? [0.3, 0.6, 0.3] : [0.1, 0.3, 0.1],
-          scale: isActive ? [1, 1.2, 1] : [1, 1.1, 1],
-        }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: "easeInOut"
+      {/* Simplified glow effect */}
+      <div
+        className="absolute inset-0 bg-gradient-to-br from-indigo-400/10 to-purple-600/10 rounded-xl blur-md -z-10"
+        style={{
+          opacity: isActive ? 0.4 : 0.2,
+          transform: isActive ? 'scale(1.1)' : 'scale(1.05)'
         }}
       />
 
       {/* Status indicator */}
-      <motion.div
-        className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-400 rounded-full shadow-lg border-2 border-gray-900"
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.7, 1, 0.7],
-        }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-
-      {/* Pulse ring animation */}
-      <motion.div
-        className="absolute -inset-1 border-2 border-indigo-400/50 rounded-xl"
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0, 0.6, 0],
-        }}
-        transition={{
-          duration: 3,
-          repeat: Infinity,
-          ease: "easeOut"
-        }}
-      />
+      <div className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-400 rounded-full shadow-lg border-2 border-gray-900" />
 
       {/* Drag indicator when dragging */}
       {isDragging && (
@@ -284,45 +235,41 @@ const ProactiveAIConcierge = () => {
   const dragControls = useDragControls();
   const constraintsRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const streamingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
   // Use the proactive AI trigger hook
   const { currentMessage, clearCurrentMessage, isAITyping, setIsAITyping } = useProactiveAITrigger();
 
+  // Optimized position initialization
+  const updatePosition = useCallback(() => {
+    const isMobile = window.innerWidth < 640;
+    const padding = isMobile ? 16 : 32;
+    
+    setPosition({
+      x: window.innerWidth - (isMobile ? 80 : 96) - padding,
+      y: window.innerHeight - (isMobile ? 80 : 96) - padding
+    });
+  }, []);
+
   // Initialize position based on screen size
   useEffect(() => {
-    const updatePosition = () => {
-      const isMobile = window.innerWidth < 640;
-      const padding = isMobile ? 16 : 32;
-      
-      setPosition({
-        x: window.innerWidth - (isMobile ? 80 : 96) - padding,
-        y: window.innerHeight - (isMobile ? 80 : 96) - padding
-      });
-    };
-
     updatePosition();
     window.addEventListener('resize', updatePosition);
     return () => window.removeEventListener('resize', updatePosition);
-  }, []);
+  }, [updatePosition]);
 
-  // Handle proactive messages
+  // Handle proactive messages (disabled for performance)
   useEffect(() => {
     // Disabled proactive messages - AI only opens when clicked
-    // if (currentMessage && !isOpen) {
-    //   setIsOpen(true);
-    //   setHasShownWelcome(true);
-    //   streamAssistantMessage(currentMessage.content);
-    //   clearCurrentMessage();
-    // }
   }, [currentMessage, isOpen]);
 
-  // Show welcome message when AI is first opened
+  // Optimized welcome message handling
   useEffect(() => {
     if (isOpen && !hasShownWelcome && conversation.messages.length === 0) {
       setHasShownWelcome(true);
       setConversation(prev => ({ ...prev, isTyping: true }));
       
-      setTimeout(async () => {
+      const welcomeTimer = setTimeout(async () => {
         try {
           // Send welcome trigger to n8n webhook
           const welcomeResponse = await sendMessageToWebhook("WELCOME_TRIGGER", sessionId, "Portfolio Visitor");
@@ -337,86 +284,21 @@ const ProactiveAIConcierge = () => {
           setConversation(prev => ({ ...prev, isTyping: false }));
         }
       }, 800);
+
+      return () => clearTimeout(welcomeTimer);
     }
   }, [isOpen, hasShownWelcome, conversation.messages.length, sessionId]);
-  // Listen for AI trigger events from contact page
+
+  // Cleanup on unmount
   useEffect(() => {
-    // Disabled automatic AI triggers from contact page
-    // const handleAITrigger = (event: CustomEvent) => {
-    //   const { message, context, source } = event.detail;
-    //   
-    //   if (!isOpen) {
-    //     setIsOpen(true);
-    //     setHasShownWelcome(true);
-    //   }
-    //   
-    //   // Add the triggered message as if user sent it
-    //   addMessage('user', message);
-    //   
-    //   // Process the message through AI
-    //   setConversation(prev => ({ ...prev, isTyping: true, showSuggestions: false }));
-    //   
-    //   setTimeout(async () => {
-    //     try {
-    //       const response = await sendMessageToWebhook(message, sessionId);
-    //       streamAssistantMessage(response);
-    //     } catch (error) {
-    //       console.error('Failed to get AI response:', error);
-    //       streamAssistantMessage("I can help you schedule a consultation with Galyarder. What type of project would you like to discuss?");
-    //     } finally {
-    //       setConversation(prev => ({ ...prev, isTyping: false }));
-    //     }
-    //   }, 1000);
-    // };
+    return () => {
+      if (streamingIntervalRef.current) {
+        clearInterval(streamingIntervalRef.current);
+      }
+    };
+  }, []);
 
-    // window.addEventListener('triggerAIConcierge', handleAITrigger as EventListener);
-    // return () => window.removeEventListener('triggerAIConcierge', handleAITrigger as EventListener);
-  }, [isOpen, sessionId]);
-
-  // Proactive triggers for exit intent and inactivity
-  useEffect(() => {
-    // Disabled all proactive triggers - AI only opens when manually clicked
-    // let inactivityTimer: NodeJS.Timeout;
-    // let exitIntentListener: (e: MouseEvent) => void;
-
-    // const triggerProactively = () => {
-    //   if (!isOpen && conversation.messages.length === 0) {
-    //     setIsOpen(true);
-    //     // Welcome message will be triggered by useEffect
-    //   }
-    // };
-
-    // // Trigger after 15 seconds of inactivity
-    // const resetInactivityTimer = () => {
-    //   clearTimeout(inactivityTimer);
-    //   inactivityTimer = setTimeout(triggerProactively, 15000);
-    // };
-
-    // // Trigger on exit intent (desktop only)
-    // exitIntentListener = (e: MouseEvent) => {
-    //   if (e.clientY <= 0 && window.innerWidth >= 640) {
-    //     triggerProactively();
-    //   }
-    // };
-
-    // // Set up listeners
-    // document.addEventListener('mousemove', resetInactivityTimer);
-    // document.addEventListener('keypress', resetInactivityTimer);
-    // document.addEventListener('scroll', resetInactivityTimer);
-    // document.addEventListener('mouseleave', exitIntentListener);
-
-    // resetInactivityTimer();
-
-    // return () => {
-    //   clearTimeout(inactivityTimer);
-    //   document.removeEventListener('mousemove', resetInactivityTimer);
-    //   document.removeEventListener('keypress', resetInactivityTimer);
-    //   document.removeEventListener('scroll', resetInactivityTimer);
-    //   document.removeEventListener('mouseleave', exitIntentListener);
-    // };
-  }, [isOpen, conversation.messages.length]);
-
-  const addMessage = (type: 'user' | 'assistant', content: string, isStreaming: boolean = false) => {
+  const addMessage = useCallback((type: 'user' | 'assistant', content: string, isStreaming: boolean = false) => {
     const message: Message = {
       id: Date.now().toString(),
       type,
@@ -430,9 +312,10 @@ const ProactiveAIConcierge = () => {
       messages: [...prev.messages, message],
       showSuggestions: type === 'assistant' && !isStreaming
     }));
-  };
+  }, []);
 
-  const streamAssistantMessage = (fullContent: string) => {
+  // Optimized streaming with better cleanup
+  const streamAssistantMessage = useCallback((fullContent: string) => {
     const messageId = Date.now().toString();
     const words = fullContent.split(' ');
     let currentWordIndex = 0;
@@ -447,7 +330,12 @@ const ProactiveAIConcierge = () => {
       showSuggestions: false
     }));
 
-    const interval = setInterval(() => {
+    // Clear any existing streaming interval
+    if (streamingIntervalRef.current) {
+      clearInterval(streamingIntervalRef.current);
+    }
+
+    streamingIntervalRef.current = setInterval(() => {
       if (currentWordIndex < words.length) {
         setConversation(prev => {
           const updatedMessages = prev.messages.map(msg => {
@@ -458,14 +346,12 @@ const ProactiveAIConcierge = () => {
           });
           return { ...prev, messages: updatedMessages };
         });
-        // Play subtle sound for each word/chunk
-        if (audioRef.current) {
-          audioRef.current.currentTime = 0;
-          audioRef.current.play().catch(e => console.warn("Audio play failed:", e));
-        }
         currentWordIndex++;
       } else {
-        clearInterval(interval);
+        if (streamingIntervalRef.current) {
+          clearInterval(streamingIntervalRef.current);
+          streamingIntervalRef.current = null;
+        }
         setConversation(prev => {
           const updatedMessages = prev.messages.map(msg => {
             if (msg.id === messageId) {
@@ -477,10 +363,10 @@ const ProactiveAIConcierge = () => {
         });
         setIsAITyping(false);
       }
-    }, 50);
-  };
+    }, 80); // Increased interval for better performance
+  }, [setIsAITyping]);
 
-  const handleSend = async () => {
+  const handleSend = useCallback(async () => {
     if (!input.trim()) return;
 
     const userMessage = input.trim();
@@ -496,10 +382,8 @@ const ProactiveAIConcierge = () => {
     } catch (error) {
       console.error('Failed to get AI response:', error);
       streamAssistantMessage("I'm experiencing connectivity issues. Please try again or contact Galyarder directly at admin@galyarder.my.id");
-    } finally {
-      // isTyping and showSuggestions are handled by streamAssistantMessage completion
     }
-  };
+  }, [input, addMessage, sessionId, streamAssistantMessage]);
 
   const handleDragStart = () => {
     setIsDragging(true);
