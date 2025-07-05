@@ -57,12 +57,12 @@ const HomePage = () => {
   }, [smoothProgress, setScrollDepth, hasCompletedOdyssey]);
 
   // ACT 1: GENESIS - Philosophical awakening (0-33%)
-  const act1Opacity = useTransform(smoothProgress, [0, 0.1, 0.25, 0.33], [1, 1, 1, 0]);
+  const act1Opacity = useTransform(smoothProgress, [0, 0.05, 0.25, 0.33], [1, 1, 1, 0]);
   const act1Scale = useTransform(smoothProgress, [0, 0.33], [1, 0.8]);
 
   // Genesis text animations - Extended and more dramatic
-  const genesis1Opacity = useTransform(smoothProgress, [0, 0.05, 0.12, 0.15], [0, 1, 1, 0]);
-  const genesis1Y = useTransform(smoothProgress, [0, 0.05, 0.15], [100, 0, -100]);
+  const genesis1Opacity = useTransform(smoothProgress, [0, 0.02, 0.12, 0.15], [1, 1, 1, 0]);
+  const genesis1Y = useTransform(smoothProgress, [0, 0.02, 0.15], [0, 0, -100]);
 
   const genesis2Opacity = useTransform(smoothProgress, [0.08, 0.13, 0.20, 0.23], [0, 1, 1, 0]);
   const genesis2Y = useTransform(smoothProgress, [0.08, 0.13, 0.23], [100, 0, -100]);
@@ -178,6 +178,69 @@ const HomePage = () => {
               </motion.h1>
               <motion.div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-blue-400 bg-clip-text text-transparent">
                 Systems Architect • Reality Shaper • Intelligence Engineer
+              </motion.div>
+              
+              {/* Initial Call to Action - Visible immediately */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1, duration: 0.8 }}
+                className="mt-12"
+              >
+                <motion.p
+                  className="text-xl md:text-2xl text-gray-300 mb-8 max-w-4xl mx-auto"
+                  animate={{
+                    opacity: [0.7, 1, 0.7],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >
+                  Scroll to begin The Galyarder's Odyssey
+                </motion.p>
+                
+                {/* Scroll Indicator */}
+                <motion.div
+                  animate={{
+                    y: [0, 10, 0],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                  className="flex flex-col items-center"
+                >
+                  <div className="w-6 h-10 border-2 border-indigo-400 rounded-full flex justify-center">
+                    <motion.div
+                      animate={{
+                        y: [0, 12, 0],
+                        opacity: [0, 1, 0],
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                      className="w-1 h-3 bg-indigo-400 rounded-full mt-2"
+                    />
+                  </div>
+                  <motion.span
+                    className="text-indigo-400 text-sm mt-2 font-mono"
+                    animate={{
+                      opacity: [0.5, 1, 0.5],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  >
+                    SCROLL
+                  </motion.span>
+                </motion.div>
               </motion.div>
             </motion.div>
 
