@@ -256,7 +256,7 @@ const AutonomousIntake = () => {
       <div className="relative">
         <motion.label
           className={`absolute left-4 pointer-events-none transition-colors duration-200 font-medium ${
-            isFocused ? 'text-indigo-400' : hasValue ? 'text-gray-300' : 'text-gray-500'
+            isFocused ? 'text-indigo-300' : hasValue ? 'text-gray-200' : 'text-gray-400'
           }`}
           style={{
             y: labelY,
@@ -265,7 +265,7 @@ const AutonomousIntake = () => {
             top: hasValue || isFocused ? '0px' : '12px',
           }}
           animate={{
-            color: isFocused ? '#6366f1' : hasValue ? '#d1d5db' : '#6b7280'
+            color: isFocused ? '#a5b4fc' : hasValue ? '#e5e7eb' : '#9ca3af'
           }}
         >
           {label} {required && <span className="text-red-400">*</span>}
@@ -286,19 +286,20 @@ const AutonomousIntake = () => {
             onBlur={handleBlur}
             placeholder=""
             rows={rows}
-            className={`w-full px-4 py-3 pt-6 bg-gray-800/50 backdrop-blur-sm rounded-lg text-white placeholder-transparent focus:outline-none transition-all duration-300 ${
+            className={`w-full px-4 py-3 pt-6 bg-gray-900/80 backdrop-blur-sm rounded-lg text-white placeholder-transparent focus:outline-none transition-all duration-300 ${
               rows ? 'resize-none' : ''
             }`}
             style={{
               border: '2px solid transparent',
               backgroundImage: isFocused 
-                ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1)), linear-gradient(90deg, #6366f1, #8b5cf6, #6366f1)'
-                : 'linear-gradient(135deg, rgba(75, 85, 99, 0.5), rgba(55, 65, 81, 0.5))',
+                ? 'linear-gradient(135deg, rgba(17, 24, 39, 0.95), rgba(31, 41, 55, 0.95)), linear-gradient(90deg, #6366f1, #8b5cf6, #6366f1)'
+                : 'linear-gradient(135deg, rgba(17, 24, 39, 0.9), rgba(31, 41, 55, 0.9))',
               backgroundOrigin: 'border-box',
               backgroundClip: 'padding-box, border-box',
               boxShadow: isFocused 
                 ? '0 0 0 1px rgba(99, 102, 241, 0.3), 0 0 20px rgba(99, 102, 241, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
                 : 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+              color: '#ffffff', // Ensure text is always white
             }}
           />
           
