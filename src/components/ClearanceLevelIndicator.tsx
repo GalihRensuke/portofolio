@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Star, Zap, ChevronDown, Info, Trophy, Target, Award, X } from 'lucide-react';
 import { getClearanceLevel, getProgressToNextLevel, getEngagementScore, ClearanceLevelInfo } from '../utils/gamification';
+import AscensionEvent from './AscensionEvent';
+import { useThemeStore } from '../store/themeStore';
 
 interface ClearanceLevelIndicatorProps {
   className?: string;
@@ -16,6 +18,9 @@ const ClearanceLevelIndicator: React.FC<ClearanceLevelIndicatorProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [previousLevel, setPreviousLevel] = useState<ClearanceLevelInfo | null>(null);
+  const [showAscension, setShowAscension] = useState(false);
+  const [ascensionData, setAscensionData] = useState<{ from: string; to: string } | null>(null);
+  const { setArchitectLevel } = useThemeStore();
 
   useEffect(() => {
     const currentScore = getEngagementScore();
@@ -28,13 +33,15 @@ const ClearanceLevelIndicator: React.FC<ClearanceLevelIndicatorProps> = ({
     if (storedLevel && storedLevel !== currentLevel.level) {
       const prevLevel = getClearanceLevel(parseInt(localStorage.getItem('galyarder_previous_score') || '0', 10));
       setPreviousLevel(prevLevel);
-      setShowLevelUp(true);
       
-      // Hide level up notification after 5 seconds
-      setTimeout(() => {
-        setShowLevelUp(false);
-        setPreviousLevel(null);
-      }, 5000);
+      // Trigger Ascension Event instead of simple level up
+      setAscensionData({ from: prevLevel.level, to: currentLevel.level });
+      setShowAscension(true);
+      
+      // Check if reached Architect level
+      if (currentLevel.level === 'Architect') {
+        setArchitectLevel(true);
+      }
     }
     
     // Store current level for future comparison
@@ -50,6 +57,17 @@ const ClearanceLevelIndicator: React.FC<ClearanceLevelIndicatorProps> = ({
     return () => clearInterval(interval);
   }, []);
 
+  const handleAscensionComplete = () => {
+    setShowAscension(false);
+    setShowLevelUp(true);
+    
+    // Hide level up notification after 3 seconds
+    setTimeout(() => {
+      setShowLevelUp(false);
+      setPreviousLevel(null);
+      setAscensionData(null);
+    }, 3000);
+  };
   const { current, next, progress, pointsNeeded } = getProgressToNextLevel(score);
 
   const getLevelIcon = (level: string) => {
@@ -91,6 +109,16 @@ const ClearanceLevelIndicator: React.FC<ClearanceLevelIndicatorProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* The Ascension Event */}
+      {showAscension && ascensionData && (
+        <AscensionEvent
+          isVisible={showAscension}
+          fromLevel={ascensionData.from}
+          toLevel={ascensionData.to}
+          onComplete={handleAscensionComplete}
+        />
+      )}
 
       {/* Main Indicator - Compact Design */}
       <motion.div

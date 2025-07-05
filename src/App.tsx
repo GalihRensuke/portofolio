@@ -13,6 +13,7 @@ import SandboxPage from './pages/SandboxPage';
 import DashboardPage from './pages/DashboardPage';
 import KnowledgeArsenalPage from './pages/KnowledgeArsenalPage';
 import { useUserBehaviorStore } from './store/userBehaviorStore';
+import { useThemeStore } from './store/themeStore';
 
 const pageVariants = {
   initial: {
@@ -81,6 +82,13 @@ function AppContent() {
   const { setCurrentPage, setTimeOnPage } = useUserBehaviorStore();
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [previousPath, setPreviousPath] = useState(location.pathname);
+
+  // Initialize theme on app load
+  const { applyTheme } = useThemeStore();
+  
+  useEffect(() => {
+    applyTheme();
+  }, [applyTheme]);
 
   // Track page changes
   useEffect(() => {
