@@ -154,7 +154,7 @@ const HomePage = () => {
         {/* ACT 1: GENESIS - The Philosophical Awakening */}
         <motion.div
           style={{ 
-            opacity: act1Opacity,
+            opacity: 1, // Always visible initially
             scale: act1Scale
           }}
           className="fixed inset-0 z-20 flex items-center justify-center"
@@ -162,13 +162,14 @@ const HomePage = () => {
           <div className="text-center max-w-7xl mx-auto px-6">
             {/* Genesis Text Sequence */}
             <motion.div
-              style={{ 
-                opacity: genesis1Opacity,
-                y: genesis1Y
-              }}
+              initial={{ opacity: 1, y: 0 }}
+              animate={{ opacity: 1, y: 0 }}
               className="mb-16"
             >
               <motion.h1
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 1, ease: "easeOut" }}
                 className="text-6xl md:text-8xl lg:text-[12rem] font-black mb-8 text-white"
                 style={{
                   textShadow: "0 0 40px rgba(99, 102, 241, 0.5)"
@@ -177,6 +178,9 @@ const HomePage = () => {
                 GALYARDER
               </motion.h1>
               <motion.div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-blue-400 bg-clip-text text-transparent">
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.5 }}
                 Systems Architect • Reality Shaper • Intelligence Engineer
               </motion.div>
               
@@ -246,8 +250,8 @@ const HomePage = () => {
 
             <motion.div
               style={{ 
-                opacity: genesis2Opacity,
-                y: genesis2Y
+                opacity: useTransform(smoothProgress, [0.08, 0.13, 0.20, 0.23], [0, 1, 1, 0]),
+                y: useTransform(smoothProgress, [0.08, 0.13, 0.23], [100, 0, -100])
               }}
               className="mb-16"
             >
@@ -259,8 +263,8 @@ const HomePage = () => {
 
             <motion.div
               style={{ 
-                opacity: genesis3Opacity,
-                y: genesis3Y
+                opacity: useTransform(smoothProgress, [0.16, 0.21, 0.28, 0.31], [0, 1, 1, 0]),
+                y: useTransform(smoothProgress, [0.16, 0.21, 0.31], [100, 0, -100])
               }}
               className="mb-16"
             >
@@ -273,9 +277,9 @@ const HomePage = () => {
             {/* System Cube Revelation */}
             <motion.div
               style={{
-                opacity: cubeOpacity,
-                scale: cubeScale,
-                rotateY: cubeRotation
+                opacity: useTransform(smoothProgress, [0.24, 0.30], [0, 1]),
+                scale: useTransform(smoothProgress, [0.24, 0.30], [0.3, 1]),
+                rotateY: useTransform(smoothProgress, [0.24, 0.33], [0, 360])
               }}
               className="relative"
             >
