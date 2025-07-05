@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { ExternalLink, Github, ArrowRight, BarChart3, Zap, Target, Info, Calendar, TrendingUp, Users, Quote } from 'lucide-react';
 import { ProjectMetrics } from '../lib/supabase';
 import MetricDetailModal from './MetricDetailModal';
@@ -33,6 +33,29 @@ const ProjectCaseStudy: React.FC<ProjectCaseStudyProps> = ({
   const [showDetails, setShowDetails] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState<MetricDetailContent | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Holographic tilt effect
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  
+  const rotateX = useTransform(mouseY, [-300, 300], [15, -15]);
+  const rotateY = useTransform(mouseX, [-300, 300], [-15, 15]);
+  
+  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    mouseX.set(event.clientX - centerX);
+    mouseY.set(event.clientY - centerY);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    mouseX.set(0);
+    mouseY.set(0);
+  };
 
   // Get testimonials for this project
   const projectTestimonials = getTestimonialsByProject(project.id);
@@ -276,148 +299,206 @@ const ProjectCaseStudy: React.FC<ProjectCaseStudyProps> = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: index * 0.1 }}
-        className="group border border-gray-200 dark:border-gray-800 rounded-lg p-6 hover:border-indigo-500 dark:hover:border-indigo-500 transition-all duration-300 hover:shadow-xl"
+        className="group relative perspective-1000"
+        onMouseMove={handleMouseMove}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={handleMouseLeave}
+        style={{ perspective: '1000px' }}
       >
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h3 className="text-xl font-bold mb-2 text-indigo-400 group-hover:text-indigo-300 transition-colors">
-              {project.project_name}
-            </h3>
-            <span className={`px-2 py-1 text-xs rounded-full border font-medium ${getStatusColor(project.status)}`}>
-              {project.status.toUpperCase()}
-            </span>
-          </div>
-          
-          <div className="flex space-x-2">
-            <Github className="h-5 w-5 text-gray-400 hover:text-indigo-400 cursor-pointer transition-colors" />
-            <ExternalLink className="h-5 w-5 text-gray-400 hover:text-indigo-400 cursor-pointer transition-colors" />
-          </div>
-        </div>
-
-        {/* Objective */}
-        <div className="mb-4">
-          <div className="flex items-center mb-2">
-            <Target className="h-4 w-4 text-indigo-400 mr-2" />
-            <span className="text-sm font-semibold text-gray-300">Objective</span>
-          </div>
-          <p className="text-gray-300 text-sm leading-relaxed">{project.objective}</p>
-        </div>
-
-        {/* Key Metrics - Conditional based on persona */}
-        {showMetrics && (
-          <div className="mb-4">
-            <div className="flex items-center mb-2">
-              <BarChart3 className="h-4 w-4 text-green-400 mr-2" />
-              <span className="text-sm font-semibold text-gray-300">Impact</span>
-            </div>
-            <div className="grid grid-cols-1 gap-2">
-              {Object.entries(project.metrics).map(([key, value]) => (
-                <div key={key} className="flex justify-between items-center text-sm">
-                  <span className="text-gray-400 capitalize">{key.replace('_', ' ')}</span>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-green-400 font-medium">{value}</span>
-                    <button
-                      onClick={() => handleMetricClick(key, value)}
-                      className="text-gray-400 hover:text-indigo-400 transition-colors p-1 rounded hover:bg-gray-800"
-                      title="View metric details"
-                    >
-                      <Info className="h-3 w-3" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Client Testimonials - NEW SECTION */}
-        {projectTestimonials.length > 0 && (
-          <div className="mb-4">
-            <div className="flex items-center mb-3">
-              <Users className="h-4 w-4 text-purple-400 mr-2" />
-              <span className="text-sm font-semibold text-gray-300">What Clients Say</span>
-            </div>
-            <div className="space-y-3">
-              {projectTestimonials.map((testimonial, idx) => (
-                <motion.div
-                  key={testimonial.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: idx * 0.1 }}
-                  className="p-3 bg-gray-800/30 border border-gray-700/50 rounded-lg"
-                >
-                  <div className="flex items-start space-x-2 mb-2">
-                    <Quote className="h-3 w-3 text-purple-400 mt-1 flex-shrink-0" />
-                    <p className="text-sm text-gray-300 italic leading-relaxed">
-                      "{testimonial.quote}"
-                    </p>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs text-gray-400">
-                      <span className="font-medium text-gray-300">{testimonial.author}</span>
-                      <span className="mx-1">•</span>
-                      <span>{testimonial.role}</span>
-                      <span className="mx-1">•</span>
-                      <span>{testimonial.company}</span>
-                    </div>
-                    {testimonial.impact && (
-                      <div className="text-xs text-purple-400 font-medium">
-                        {testimonial.impact}
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Tech Stack - Emphasized for developers */}
-        <div className={`mb-4 ${emphasizeTechnical ? 'order-first' : ''}`}>
-          <div className="flex flex-wrap gap-2">
-            {project.tech_stack.map((tech) => (
-              <span
-                key={tech}
-                className={`px-2 py-1 text-xs rounded border ${
-                  emphasizeTechnical 
-                    ? 'bg-indigo-900/30 text-indigo-300 border-indigo-700' 
-                    : 'bg-gray-800 text-gray-300 border-gray-700'
-                }`}
-              >
-                {tech}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Expandable Details */}
-        <button
-          onClick={() => setShowDetails(!showDetails)}
-          className="flex items-center text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
-        >
-          <Zap className="h-4 w-4 mr-1" />
-          System Architecture
-          <ArrowRight className={`h-3 w-3 ml-1 transition-transform ${showDetails ? 'rotate-90' : ''}`} />
-        </button>
-
         <motion.div
-          initial={false}
-          animate={{ height: showDetails ? 'auto' : 0, opacity: showDetails ? 1 : 0 }}
+          className="relative border border-gray-200 dark:border-gray-800 rounded-lg p-6 transition-all duration-300 overflow-hidden"
+          style={{
+            rotateX: isHovered ? rotateX : 0,
+            rotateY: isHovered ? rotateY : 0,
+            transformStyle: 'preserve-3d',
+          }}
+          animate={{
+            borderColor: isHovered ? '#6366f1' : undefined,
+            boxShadow: isHovered 
+              ? [
+                  '0 0 0 1px rgba(99, 102, 241, 0.3)',
+                  '0 10px 40px rgba(99, 102, 241, 0.2)',
+                  '0 0 80px rgba(99, 102, 241, 0.1)'
+                ].join(', ')
+              : '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          }}
           transition={{ duration: 0.3 }}
-          className="overflow-hidden"
         >
-          <div className="pt-3 border-t border-gray-700 mt-3">
-            <p className="text-sm text-gray-300 leading-relaxed mb-3">
-              {project.system_architecture}
-            </p>
-            {project.visual_flow && (
-              <div className="bg-gray-800 p-3 rounded border border-gray-700">
-                <div className="text-xs text-gray-400 mb-1">Data Flow</div>
-                <div className="text-sm text-indigo-300 font-mono">
-                  {project.visual_flow}
+          {/* Holographic glow overlay */}
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 via-purple-500/5 to-blue-500/5 rounded-lg"
+            animate={{
+              opacity: isHovered ? 1 : 0,
+              background: isHovered 
+                ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 50%, rgba(59, 130, 246, 0.1) 100%)'
+                : 'transparent'
+            }}
+            transition={{ duration: 0.3 }}
+          />
+          
+          {/* Animated border gradient */}
+          <motion.div
+            className="absolute inset-0 rounded-lg"
+            animate={{
+              background: isHovered
+                ? 'linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.4), transparent)'
+                : 'transparent',
+              backgroundSize: isHovered ? '200% 100%' : '100% 100%',
+              backgroundPosition: isHovered ? ['0% 0%', '200% 0%'] : '0% 0%',
+            }}
+            transition={{
+              background: { duration: 0.3 },
+              backgroundPosition: { duration: 2, repeat: Infinity, ease: 'linear' }
+            }}
+            style={{
+              maskImage: 'linear-gradient(to right, transparent 2px, black 2px, black calc(100% - 2px), transparent calc(100% - 2px)), linear-gradient(to bottom, transparent 2px, black 2px, black calc(100% - 2px), transparent calc(100% - 2px))',
+              maskComposite: 'intersect',
+            }}
+          />
+
+          <div className="relative z-10">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-xl font-bold mb-2 text-indigo-400 group-hover:text-indigo-300 transition-colors">
+                  {project.project_name}
+                </h3>
+                <span className={`px-2 py-1 text-xs rounded-full border font-medium ${getStatusColor(project.status)}`}>
+                  {project.status.toUpperCase()}
+                </span>
+              </div>
+              
+              <div className="flex space-x-2">
+                <Github className="h-5 w-5 text-gray-400 hover:text-indigo-400 cursor-pointer transition-colors" />
+                <ExternalLink className="h-5 w-5 text-gray-400 hover:text-indigo-400 cursor-pointer transition-colors" />
+              </div>
+            </div>
+
+            {/* Objective */}
+            <div className="mb-4">
+              <div className="flex items-center mb-2">
+                <Target className="h-4 w-4 text-indigo-400 mr-2" />
+                <span className="text-sm font-semibold text-gray-300">Objective</span>
+              </div>
+              <p className="text-gray-300 text-sm leading-relaxed">{project.objective}</p>
+            </div>
+
+            {/* Key Metrics - Conditional based on persona */}
+            {showMetrics && (
+              <div className="mb-4">
+                <div className="flex items-center mb-2">
+                  <BarChart3 className="h-4 w-4 text-green-400 mr-2" />
+                  <span className="text-sm font-semibold text-gray-300">Impact</span>
+                </div>
+                <div className="grid grid-cols-1 gap-2">
+                  {Object.entries(project.metrics).map(([key, value]) => (
+                    <div key={key} className="flex justify-between items-center text-sm">
+                      <span className="text-gray-400 capitalize">{key.replace('_', ' ')}</span>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-green-400 font-medium">{value}</span>
+                        <button
+                          onClick={() => handleMetricClick(key, value)}
+                          className="text-gray-400 hover:text-indigo-400 transition-colors p-1 rounded hover:bg-gray-800"
+                          title="View metric details"
+                        >
+                          <Info className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
+
+            {/* Client Testimonials - NEW SECTION */}
+            {projectTestimonials.length > 0 && (
+              <div className="mb-4">
+                <div className="flex items-center mb-3">
+                  <Users className="h-4 w-4 text-purple-400 mr-2" />
+                  <span className="text-sm font-semibold text-gray-300">What Clients Say</span>
+                </div>
+                <div className="space-y-3">
+                  {projectTestimonials.map((testimonial, idx) => (
+                    <motion.div
+                      key={testimonial.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.4, delay: idx * 0.1 }}
+                      className="p-3 bg-gray-800/30 border border-gray-700/50 rounded-lg"
+                    >
+                      <div className="flex items-start space-x-2 mb-2">
+                        <Quote className="h-3 w-3 text-purple-400 mt-1 flex-shrink-0" />
+                        <p className="text-sm text-gray-300 italic leading-relaxed">
+                          "{testimonial.quote}"
+                        </p>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs text-gray-400">
+                          <span className="font-medium text-gray-300">{testimonial.author}</span>
+                          <span className="mx-1">•</span>
+                          <span>{testimonial.role}</span>
+                          <span className="mx-1">•</span>
+                          <span>{testimonial.company}</span>
+                        </div>
+                        {testimonial.impact && (
+                          <div className="text-xs text-purple-400 font-medium">
+                            {testimonial.impact}
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Tech Stack - Emphasized for developers */}
+            <div className={`mb-4 ${emphasizeTechnical ? 'order-first' : ''}`}>
+              <div className="flex flex-wrap gap-2">
+                {project.tech_stack.map((tech) => (
+                  <span
+                    key={tech}
+                    className={`px-2 py-1 text-xs rounded border ${
+                      emphasizeTechnical 
+                        ? 'bg-indigo-900/30 text-indigo-300 border-indigo-700' 
+                        : 'bg-gray-800 text-gray-300 border-gray-700'
+                    }`}
+                  >
+                    {tech}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Expandable Details */}
+            <button
+              onClick={() => setShowDetails(!showDetails)}
+              className="flex items-center text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
+            >
+              <Zap className="h-4 w-4 mr-1" />
+              System Architecture
+              <ArrowRight className={`h-3 w-3 ml-1 transition-transform ${showDetails ? 'rotate-90' : ''}`} />
+            </button>
+
+            <motion.div
+              initial={false}
+              animate={{ height: showDetails ? 'auto' : 0, opacity: showDetails ? 1 : 0 }}
+              transition={{ duration: 0.3 }}
+              className="overflow-hidden"
+            >
+              <div className="pt-3 border-t border-gray-700 mt-3">
+                <p className="text-sm text-gray-300 leading-relaxed mb-3">
+                  {project.system_architecture}
+                </p>
+                {project.visual_flow && (
+                  <div className="bg-gray-800 p-3 rounded border border-gray-700">
+                    <div className="text-xs text-gray-400 mb-1">Data Flow</div>
+                    <div className="text-sm text-indigo-300 font-mono">
+                      {project.visual_flow}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
           </div>
         </motion.div>
       </motion.div>

@@ -1,9 +1,12 @@
 import React, { useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { useIntakeStore } from '../store/intakeStore';
 import { ArrowRight, ArrowLeft, CheckCircle, Zap, Clock, DollarSign, Target, Calendar, ExternalLink, Rocket } from 'lucide-react';
 
 const AutonomousIntake = () => {
+  const [focusedField, setFocusedField] = React.useState<string | null>(null);
+  const [validatedFields, setValidatedFields] = React.useState<Set<string>>(new Set());
+
   const {
     step,
     intent,
@@ -202,27 +205,219 @@ const AutonomousIntake = () => {
     return '48 hours';
   };
 
+  // Enhanced input component with holographic effects
+  const HolographicInput = ({ 
+    type = 'text', 
+    value, 
+    onChange, 
+    placeholder, 
+    label,
+    fieldId,
+    required = false,
+    rows 
+  }: {
+    type?: string;
+    value: string;
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+    placeholder: string;
+    label: string;
+    fieldId: string;
+    required?: boolean;
+    rows?: number;
+  }) => {
+    const isFocused = focusedField === fieldId;
+    const isValid = validatedFields.has(fieldId);
+    const hasValue = value.length > 0;
+    
+    const borderGlow = useMotionValue(0);
+    const labelY = useTransform(borderGlow, [0, 1], [0, -25]);
+    const labelScale = useTransform(borderGlow, [0, 1], [1, 0.85]);
+    
+    React.useEffect(() => {
+      borderGlow.set(isFocused || hasValue ? 1 : 0);
+    }, [isFocused, hasValue, borderGlow]);
+    
+    const handleFocus = () => {
+      setFocusedField(fieldId);
+    };
+    
+    const handleBlur = () => {
+      setFocusedField(null);
+      if (required && value.trim()) {
+        setValidatedFields(prev => new Set([...prev, fieldId]));
+        // Play validation sound effect (mock)
+        console.log('✓ Field validated:', fieldId);
+      }
+    };
+    
+    const InputComponent = rows ? 'textarea' : 'input';
+    
+    return (
+      <div className="relative">
+        <motion.label
+          className={`absolute left-4 pointer-events-none transition-colors duration-200 font-medium ${
+            isFocused ? 'text-indigo-400' : hasValue ? 'text-gray-300' : 'text-gray-500'
+          }`}
+          style={{
+            y: labelY,
+            scale: labelScale,
+            transformOrigin: 'left center',
+            top: hasValue || isFocused ? '0px' : '12px',
+          }}
+          animate={{
+            color: isFocused ? '#6366f1' : hasValue ? '#d1d5db' : '#6b7280'
+          }}
+        >
+          {label} {required && <span className="text-red-400">*</span>}
+        </motion.label>
+        
+        <motion.div
+          className="relative"
+          animate={{
+            scale: isFocused ? 1.02 : 1,
+          }}
+          transition={{ duration: 0.2 }}
+        >
+          <InputComponent
+            type={type}
+            value={value}
+            onChange={onChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            placeholder=""
+            rows={rows}
+            className={`w-full px-4 py-3 pt-6 bg-gray-800/50 backdrop-blur-sm rounded-lg text-white placeholder-transparent focus:outline-none transition-all duration-300 ${
+              rows ? 'resize-none' : ''
+            }`}
+            style={{
+              border: '2px solid transparent',
+              backgroundImage: isFocused 
+                ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1)), linear-gradient(90deg, #6366f1, #8b5cf6, #6366f1)'
+                : 'linear-gradient(135deg, rgba(75, 85, 99, 0.5), rgba(55, 65, 81, 0.5))',
+              backgroundOrigin: 'border-box',
+              backgroundClip: 'padding-box, border-box',
+              boxShadow: isFocused 
+                ? '0 0 0 1px rgba(99, 102, 241, 0.3), 0 0 20px rgba(99, 102, 241, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                : 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+            }}
+          />
+          
+          {/* Animated border effect */}
+          <motion.div
+            className="absolute inset-0 rounded-lg pointer-events-none"
+            animate={{
+              background: isFocused
+                ? 'linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.6), transparent)'
+                : 'transparent',
+              backgroundSize: isFocused ? '200% 100%' : '100% 100%',
+              backgroundPosition: isFocused ? ['0% 0%', '200% 0%'] : '0% 0%',
+            }}
+            transition={{
+              background: { duration: 0.3 },
+              backgroundPosition: { duration: 1.5, repeat: Infinity, ease: 'linear' }
+            }}
+            style={{
+              maskImage: 'linear-gradient(to right, transparent 1px, black 1px, black calc(100% - 1px), transparent calc(100% - 1px)), linear-gradient(to bottom, transparent 1px, black 1px, black calc(100% - 1px), transparent calc(100% - 1px))',
+              maskComposite: 'intersect',
+            }}
+          />
+          
+          {/* Validation checkmark */}
+          <AnimatePresence>
+            {isValid && (
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                exit={{ scale: 0, rotate: 180 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2"
+              >
+                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-4 h-4 text-white" />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </div>
+    );
+  };
+
   return (
     <div className="max-w-2xl mx-auto">
       {/* Progress Indicator */}
-      <div className="flex items-center justify-center mb-8">
+      <motion.div 
+        className="flex items-center justify-center mb-8"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
         {[1, 2, 3].map((stepNum) => (
           <React.Fragment key={stepNum}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-              stepNum <= step 
-                ? 'bg-indigo-500 text-white' 
-                : 'bg-gray-700 text-gray-400'
-            }`}>
-              {stepNum}
-            </div>
+            <motion.div
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium relative overflow-hidden ${
+                stepNum <= step 
+                  ? 'bg-indigo-500 text-white' 
+                  : 'bg-gray-700 text-gray-400'
+              }`}
+              animate={{
+                scale: stepNum === step ? [1, 1.1, 1] : 1,
+                boxShadow: stepNum === step 
+                  ? '0 0 20px rgba(99, 102, 241, 0.5)'
+                  : '0 0 0px rgba(99, 102, 241, 0)',
+              }}
+              transition={{
+                scale: { duration: 2, repeat: Infinity },
+                boxShadow: { duration: 0.3 }
+              }}
+            >
+              {stepNum <= step && (
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-purple-500 rounded-full"
+                  animate={{
+                    rotate: [0, 360],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: 'linear'
+                  }}
+                  style={{
+                    background: 'conic-gradient(from 0deg, transparent, rgba(99, 102, 241, 0.3), transparent)',
+                  }}
+                />
+              )}
+              <span className="relative z-10">{stepNum}</span>
+            </motion.div>
             {stepNum < 3 && (
-              <div className={`w-12 h-0.5 ${
-                stepNum < step ? 'bg-indigo-500' : 'bg-gray-700'
-              }`} />
+              <motion.div
+                className={`w-12 h-0.5 relative overflow-hidden ${
+                  stepNum < step ? 'bg-indigo-500' : 'bg-gray-700'
+                }`}
+                animate={{
+                  background: stepNum < step 
+                    ? 'linear-gradient(90deg, #6366f1, #8b5cf6, #6366f1)'
+                    : '#374151'
+                }}
+              >
+                {stepNum < step && (
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30"
+                    animate={{
+                      x: ['-100%', '100%'],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: 'linear'
+                    }}
+                  />
+                )}
+              </motion.div>
             )}
           </React.Fragment>
         ))}
-      </div>
+      </motion.div>
 
       <AnimatePresence mode="wait">
         {/* Step 1: Intent */}
@@ -431,15 +626,13 @@ const AutonomousIntake = () => {
 
             {/* Project Description */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-3">
-                Challenge Description (Recommended for flagship projects)
-              </label>
-              <textarea
+              <HolographicInput
                 placeholder="Describe your challenge, current pain points, and desired outcomes. What would massive ROI look like for your organization?"
                 value={projectDescription}
                 onChange={(e) => setProjectDescription(e.target.value)}
+                label="Challenge Description (Recommended for flagship projects)"
+                fieldId="projectDescription"
                 rows={4}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none resize-none"
               />
             </div>
           </motion.div>
@@ -461,41 +654,37 @@ const AutonomousIntake = () => {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Name *
-                </label>
-                <input
+                <HolographicInput
                   type="text"
                   value={contactInfo.name}
                   onChange={(e) => setContactInfo({ name: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none"
                   placeholder="Your name"
+                  label="Name"
+                  fieldId="name"
+                  required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Email *
-                </label>
-                <input
+                <HolographicInput
                   type="email"
                   value={contactInfo.email}
                   onChange={(e) => setContactInfo({ email: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none"
                   placeholder="your@email.com"
+                  label="Email"
+                  fieldId="email"
+                  required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Company (Optional)
-                </label>
-                <input
+                <HolographicInput
                   type="text"
                   value={contactInfo.company}
                   onChange={(e) => setContactInfo({ company: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none"
                   placeholder="Company name"
+                  label="Company (Optional)"
+                  fieldId="company"
                 />
               </div>
             </div>
@@ -522,21 +711,48 @@ const AutonomousIntake = () => {
       </AnimatePresence>
 
       {/* Navigation */}
-      <div className="flex justify-between items-center mt-8">
+      <motion.div 
+        className="flex justify-between items-center mt-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.3 }}
+      >
         <button
           onClick={handleBack}
           disabled={step === 1}
-          className="flex items-center px-4 py-2 text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center px-4 py-2 text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </button>
 
-        <button
+        <motion.button
           onClick={handleNext}
           disabled={!canProceed() || isSubmitting}
-          className="flex items-center px-6 py-3 bg-indigo-500 hover:bg-indigo-600 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
+          className="flex items-center px-6 py-3 bg-indigo-500 hover:bg-indigo-600 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all duration-200 relative overflow-hidden"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          animate={{
+            boxShadow: canProceed() && !isSubmitting
+              ? '0 0 20px rgba(99, 102, 241, 0.4)'
+              : '0 0 0px rgba(99, 102, 241, 0)',
+          }}
         >
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600"
+            animate={{
+              x: canProceed() && !isSubmitting ? ['-100%', '100%'] : '0%',
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: 'linear'
+            }}
+            style={{
+              background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
+            }}
+          />
+          <span className="relative z-10">
           {isSubmitting ? (
             'Processing...'
           ) : step === 3 ? (
@@ -547,8 +763,9 @@ const AutonomousIntake = () => {
               <ArrowRight className="h-4 w-4 ml-2" />
             </>
           )}
-        </button>
-      </div>
+          </span>
+        </motion.button>
+      </motion.div>
     </div>
   );
 };

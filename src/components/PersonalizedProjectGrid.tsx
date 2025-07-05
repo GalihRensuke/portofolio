@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, useMotionValue, useTransform } from 'framer-motion';
 import ProjectCaseStudy from './ProjectCaseStudy';
 import { projectMetrics } from '../data/projectMetrics';
 import { Persona, usePersonaPreferences } from '../hooks/usePersonalization';
@@ -9,6 +9,7 @@ interface PersonalizedProjectGridProps {
 }
 
 const PersonalizedProjectGrid: React.FC<PersonalizedProjectGridProps> = ({ persona }) => {
+  const [hoveredProject, setHoveredProject] = React.useState<string | null>(null);
   const preferences = usePersonaPreferences(persona);
   
   // Sort projects based on persona preferences
@@ -64,17 +65,29 @@ const PersonalizedProjectGrid: React.FC<PersonalizedProjectGridProps> = ({ perso
         </p>
       </motion.div>
 
-      <div className="grid lg:grid-cols-2 gap-8">
+      <motion.div 
+        className="grid lg:grid-cols-2 gap-8"
+        style={{ perspective: '1000px' }}
+      >
         {sortedProjects.map((project, index) => (
-          <ProjectCaseStudy 
-            key={project.id} 
-            project={project} 
-            index={index}
-            showMetrics={preferences.showMetrics}
-            emphasizeTechnical={preferences.emphasizeTechnical}
-          />
+          <motion.div
+            key={project.id}
+            onHoverStart={() => setHoveredProject(project.id)}
+            onHoverEnd={() => setHoveredProject(null)}
+            animate={{
+              z: hoveredProject === project.id ? 50 : 0,
+            }}
+            transition={{ duration: 0.3 }}
+          >
+            <ProjectCaseStudy 
+              project={project} 
+              index={index}
+              showMetrics={preferences.showMetrics}
+              emphasizeTechnical={preferences.emphasizeTechnical}
+            />
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 };
