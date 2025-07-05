@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Menu, X, Terminal } from 'lucide-react';
 import ClearanceLevelIndicator from './ClearanceLevelIndicator';
+import MissionControl from './MissionControl';
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -88,6 +89,11 @@ const Navigation = () => {
           className="lg:hidden overflow-hidden bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm"
         >
           <div className="py-4 space-y-1 border-t border-gray-200 dark:border-gray-800">
+            {/* Mission Control in Mobile Menu */}
+            <div className="px-4 py-3 mx-2 border-b border-gray-200 dark:border-gray-800 mb-4">
+              <MissionControl />
+            </div>
+            
             {/* Mobile Navigation Items */}
             {navItems.map((item) => (
               <Link

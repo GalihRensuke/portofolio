@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useDragControls, PanInfo } from 'framer-motion';
-import { MessageCircle, X, Send, Loader, ArrowRight, Terminal, Zap, Move } from 'lucide-react';
+import { MessageCircle, X, Send, ArrowRight, Terminal, Zap, Move } from 'lucide-react';
 import { useProactiveAITrigger } from '../hooks/useProactiveAITrigger';
+import TypingIndicator from './TypingIndicator';
 
 interface Message {
   id: string;
   type: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  isStreaming?: boolean;
 }
 
 interface ConversationState {
@@ -281,6 +283,7 @@ const ProactiveAIConcierge = () => {
 
   const dragControls = useDragControls();
   const constraintsRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   
   // Use the proactive AI trigger hook
   const { currentMessage, clearCurrentMessage } = useProactiveAITrigger();
@@ -307,7 +310,7 @@ const ProactiveAIConcierge = () => {
     if (currentMessage && !isOpen) {
       setIsOpen(true);
       setHasShownWelcome(true);
-      addMessage('assistant', currentMessage.content);
+      streamAssistantMessage(currentMessage.content);
       clearCurrentMessage();
     }
   }, [currentMessage, isOpen]);
@@ -322,12 +325,12 @@ const ProactiveAIConcierge = () => {
         try {
           // Send welcome trigger to n8n webhook
           const welcomeResponse = await sendMessageToWebhook("WELCOME_TRIGGER", sessionId, "Portfolio Visitor");
-          addMessage('assistant', welcomeResponse);
+          streamAssistantMessage(welcomeResponse);
           setConversation(prev => ({ ...prev, showSuggestions: true }));
         } catch (error) {
           console.error('Failed to get welcome message:', error);
           // Fallback welcome message
-          addMessage('assistant', "Welcome! I am the digital interface for Galyarder. I have access to his project data, architectural principles, and availability. I can help you explore flagship partnership opportunities or answer questions about his work. How can I assist you today?");
+          streamAssistantMessage("Welcome! I am the digital interface for Galyarder. I have access to his project data, architectural principles, and availability. I can help you explore flagship partnership opportunities or answer questions about his work. How can I assist you today?");
           setConversation(prev => ({ ...prev, showSuggestions: true }));
         } finally {
           setConversation(prev => ({ ...prev, isTyping: false }));
@@ -354,10 +357,10 @@ const ProactiveAIConcierge = () => {
       setTimeout(async () => {
         try {
           const response = await sendMessageToWebhook(message, sessionId);
-          addMessage('assistant', response);
+          streamAssistantMessage(response);
         } catch (error) {
           console.error('Failed to get AI response:', error);
-          addMessage('assistant', "I can help you schedule a consultation with Galyarder. What type of project would you like to discuss?");
+          streamAssistantMessage("I can help you schedule a consultation with Galyarder. What type of project would you like to discuss?");
         } finally {
           setConversation(prev => ({ ...prev, isTyping: false }));
         }
@@ -410,19 +413,65 @@ const ProactiveAIConcierge = () => {
     };
   }, [isOpen, conversation.messages.length]);
 
-  const addMessage = (type: 'user' | 'assistant', content: string) => {
+  const addMessage = (type: 'user' | 'assistant', content: string, isStreaming: boolean = false) => {
     const message: Message = {
       id: Date.now().toString(),
       type,
       content,
-      timestamp: new Date()
+      timestamp: new Date(),
+      isStreaming
     };
 
     setConversation(prev => ({
       ...prev,
       messages: [...prev.messages, message],
-      showSuggestions: type === 'assistant'
+      showSuggestions: type === 'assistant' && !isStreaming
     }));
+  };
+
+  const streamAssistantMessage = (fullContent: string) => {
+    const messageId = Date.now().toString();
+    const words = fullContent.split(' ');
+    let currentWordIndex = 0;
+
+    // Add an initial streaming message placeholder
+    setConversation(prev => ({
+      ...prev,
+      messages: [...prev.messages, { id: messageId, type: 'assistant', content: '', timestamp: new Date(), isStreaming: true }],
+      isTyping: true,
+      showSuggestions: false
+    }));
+
+    const interval = setInterval(() => {
+      if (currentWordIndex < words.length) {
+        setConversation(prev => {
+          const updatedMessages = prev.messages.map(msg => {
+            if (msg.id === messageId) {
+              return { ...msg, content: msg.content + (msg.content ? ' ' : '') + words[currentWordIndex] };
+            }
+            return msg;
+          });
+          return { ...prev, messages: updatedMessages };
+        });
+        // Play subtle sound for each word/chunk
+        if (audioRef.current) {
+          audioRef.current.currentTime = 0;
+          audioRef.current.play().catch(e => console.warn("Audio play failed:", e));
+        }
+        currentWordIndex++;
+      } else {
+        clearInterval(interval);
+        setConversation(prev => {
+          const updatedMessages = prev.messages.map(msg => {
+            if (msg.id === messageId) {
+              return { ...msg, isStreaming: false };
+            }
+            return msg;
+          });
+          return { ...prev, isTyping: false, showSuggestions: true, messages: updatedMessages };
+        });
+      }
+    }, 50);
   };
 
   const handleSend = async () => {
@@ -437,12 +486,12 @@ const ProactiveAIConcierge = () => {
     try {
       console.log('🤖 Sending message to Galyarder AI:', userMessage);
       const response = await sendMessageToWebhook(userMessage, sessionId);
-      addMessage('assistant', response);
+      streamAssistantMessage(response);
     } catch (error) {
       console.error('Failed to get AI response:', error);
-      addMessage('assistant', "I'm experiencing connectivity issues. Please try again or contact Galyarder directly at admin@galyarder.my.id");
+      streamAssistantMessage("I'm experiencing connectivity issues. Please try again or contact Galyarder directly at admin@galyarder.my.id");
     } finally {
-      setConversation(prev => ({ ...prev, isTyping: false }));
+      // isTyping and showSuggestions are handled by streamAssistantMessage completion
     }
   };
 
@@ -551,6 +600,9 @@ const ProactiveAIConcierge = () => {
 
   return (
     <>
+      {/* Audio element for subtle feedback */}
+      <audio ref={audioRef} src="/subtle_sound.mp3" preload="auto" />
+
       {/* Viewport constraints for dragging */}
       <div ref={constraintsRef} className="fixed inset-0 pointer-events-none" />
 
@@ -688,7 +740,7 @@ const ProactiveAIConcierge = () => {
                 <div className="flex justify-start">
                   <div className="bg-gray-800/80 border border-gray-700/50 p-3 sm:p-4 rounded-xl shadow-md">
                     <div className="flex items-center space-x-2">
-                      <Loader className="h-3 w-3 sm:h-4 sm:w-4 text-indigo-400 animate-spin" />
+                      <TypingIndicator />
                       <span className="text-gray-400 text-xs">Galyarder AI is thinking...</span>
                     </div>
                   </div>
