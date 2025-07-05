@@ -221,14 +221,8 @@ function App() {
   const [isBootComplete, setIsBootComplete] = useState(false);
 
   useEffect(() => {
-    // Check if this is the first visit in this session
-    const hasBooted = sessionStorage.getItem('galyarder_system_booted');
-    if (!hasBooted) {
-      setShowBootSequence(true);
-      sessionStorage.setItem('galyarder_system_booted', 'true');
-    } else {
-      setIsBootComplete(true);
-    }
+    // Always show boot sequence on page load/refresh
+    setShowBootSequence(true);
   }, []);
 
   const handleBootComplete = () => {

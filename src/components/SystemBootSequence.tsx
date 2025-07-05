@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Terminal, Zap, Brain, Shield, Database } from 'lucide-react';
+import { getClearanceLevel, getEngagementScore } from '../utils/gamification';
 
 interface BootSequenceProps {
   onBootComplete: () => void;
@@ -9,15 +10,32 @@ interface BootSequenceProps {
 const SystemBootSequence: React.FC<BootSequenceProps> = ({ onBootComplete }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
+  const [gamificationStats, setGamificationStats] = useState({
+    score: 0,
+    level: 'Explorer',
+    color: 'text-blue-400'
+  });
+
+  useEffect(() => {
+    // Load current gamification stats
+    const currentScore = getEngagementScore();
+    const currentLevel = getClearanceLevel(currentScore);
+    setGamificationStats({
+      score: currentScore,
+      level: currentLevel.level,
+      color: currentLevel.color
+    });
+  }, []);
 
   const bootSteps = [
     { text: "INITIALIZING GALYARDER_OS v4.3...", icon: Terminal, delay: 0 },
     { text: "LOADING NEURAL PATHWAYS...", icon: Brain, delay: 400 },
+    { text: `CLEARANCE LEVEL: ${gamificationStats.level.toUpperCase()} [${gamificationStats.score} POINTS]`, icon: Shield, delay: 800 },
     { text: "AI_CONCIERGE... [ONLINE]", icon: Zap, delay: 800 },
     { text: "SECURITY PROTOCOLS... [ACTIVE]", icon: Shield, delay: 1200 },
     { text: "KNOWLEDGE_ARSENAL... [SYNCHRONIZED]", icon: Database, delay: 1600 },
     { text: "RENDERING REALITY...", icon: Terminal, delay: 2000 },
-    { text: "SYSTEM READY. WELCOME TO THE ASCENDANCY.", icon: Zap, delay: 2400 }
+    { text: `SYSTEM READY. WELCOME BACK, ${gamificationStats.level.toUpperCase()}.`, icon: Zap, delay: 2400 }
   ];
 
   useEffect(() => {
@@ -116,13 +134,16 @@ const SystemBootSequence: React.FC<BootSequenceProps> = ({ onBootComplete }) => 
                       className={`text-sm ${
                         isActive ? 'text-green-400' : 'text-gray-600'
                       }`}
-                      animate={isCurrent ? {
+                      animate={isCurrent && index !== 2 ? {
                         textShadow: [
                           "0 0 0px rgba(34, 197, 94, 0)",
                           "0 0 10px rgba(34, 197, 94, 0.8)",
                           "0 0 0px rgba(34, 197, 94, 0)"
                         ]
                       } : {}}
+                      className={`text-sm ${
+                        isActive ? (index === 2 ? gamificationStats.color : 'text-green-400') : 'text-gray-600'
+                      }`}
                       transition={{ duration: 1, repeat: Infinity }}
                     >
                       {step.text}
@@ -170,6 +191,29 @@ const SystemBootSequence: React.FC<BootSequenceProps> = ({ onBootComplete }) => 
                 transition={{ delay: 0.5 }}
                 className="text-center mt-8"
               >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.7 }}
+                  className={`mb-4 p-4 border rounded-lg ${
+                    gamificationStats.level === 'Architect' ? 'border-yellow-400/30 bg-yellow-400/10' :
+                    gamificationStats.level === 'Analyst' ? 'border-purple-400/30 bg-purple-400/10' :
+                    'border-blue-400/30 bg-blue-400/10'
+                  }`}
+                >
+                  <div className={`text-lg font-bold ${gamificationStats.color} mb-2`}>
+                    CLEARANCE LEVEL: {gamificationStats.level.toUpperCase()}
+                  </div>
+                  <div className="text-sm text-gray-400">
+                    Engagement Score: {gamificationStats.score} points
+                  </div>
+                  {gamificationStats.level === 'Architect' && (
+                    <div className="text-xs text-yellow-400 mt-2">
+                      ★ MAXIMUM CLEARANCE ACHIEVED ★
+                    </div>
+                  )}
+                </motion.div>
+                
                 <motion.div
                   animate={{
                     scale: [1, 1.1, 1],
