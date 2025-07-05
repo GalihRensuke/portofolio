@@ -54,38 +54,10 @@ const KnowledgeArsenalDemo = () => {
 
   const fetchLiveMetrics = async () => {
     setLoadingMetrics(true);
-    const n8nWebhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL;
     
-    if (!n8nWebhookUrl) {
-      console.warn("VITE_N8N_WEBHOOK_URL is not set. Using fallback data.");
-      setFallbackMetrics();
-      setLoadingMetrics(false);
-      return;
-    }
-
-    try {
-      // Try to fetch from a stats endpoint, but expect it might not exist
-      const response = await fetch(`${n8nWebhookUrl}/stats`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        // Add timeout to prevent hanging
-        signal: AbortSignal.timeout(5000)
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data: LiveKnowledgeMetrics = await response.json();
-      setLiveMetrics(data);
-    } catch (error) {
-      console.error("Failed to fetch live knowledge metrics:", error);
-      setFallbackMetrics();
-    } finally {
-      setLoadingMetrics(false);
-    }
+    // Use localStorage data directly instead of fetching from n8n
+    setFallbackMetrics();
+    setLoadingMetrics(false);
   };
 
   const setFallbackMetrics = () => {
