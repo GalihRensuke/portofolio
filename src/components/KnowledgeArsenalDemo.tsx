@@ -58,65 +58,58 @@ const KnowledgeArsenalDemo = () => {
     
     if (!n8nWebhookUrl) {
       console.warn("VITE_N8N_WEBHOOK_URL is not set. Using fallback data.");
-      // Fallback to local knowledgeBase data if live fetch fails
-      if (knowledgeBase) {
-        setLiveMetrics({
-          total_entities: knowledgeBase.metadata.total_entities,
-          entities_by_type: knowledgeBase.metadata.entities_by_type,
-          relationships_detected: knowledgeBase.entities.reduce((acc: number, entity: KnowledgeEntity) => 
-            acc + entity.relationships.length, 0
-          )
-        });
-      } else {
-        // Default mock data
-        setLiveMetrics({
-          total_entities: 1247,
-          entities_by_type: {
-            'project_case_study': 3,
-            'architectural_principle': 15,
-            'insight': 18,
-            'testimonial': 10
-          },
-          relationships_detected: 89
-        });
-      }
+      setFallbackMetrics();
       setLoadingMetrics(false);
       return;
     }
 
     try {
-      const response = await fetch(`${n8nWebhookUrl}/knowledge_base/stats`);
+      // Try to fetch from a stats endpoint, but expect it might not exist
+      const response = await fetch(`${n8nWebhookUrl}/stats`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // Add timeout to prevent hanging
+        signal: AbortSignal.timeout(5000)
+      });
+      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
       const data: LiveKnowledgeMetrics = await response.json();
       setLiveMetrics(data);
     } catch (error) {
       console.error("Failed to fetch live knowledge metrics:", error);
-      // Fallback to local knowledgeBase data if live fetch fails
-      if (knowledgeBase) {
-        setLiveMetrics({
-          total_entities: knowledgeBase.metadata.total_entities,
-          entities_by_type: knowledgeBase.metadata.entities_by_type,
-          relationships_detected: knowledgeBase.entities.reduce((acc: number, entity: KnowledgeEntity) => 
-            acc + entity.relationships.length, 0
-          )
-        });
-      } else {
-        // Default mock data
-        setLiveMetrics({
-          total_entities: 1247,
-          entities_by_type: {
-            'project_case_study': 3,
-            'architectural_principle': 15,
-            'insight': 18,
-            'testimonial': 10
-          },
-          relationships_detected: 89
-        });
-      }
+      setFallbackMetrics();
     } finally {
       setLoadingMetrics(false);
+    }
+  };
+
+  const setFallbackMetrics = () => {
+    // Fallback to local knowledgeBase data if available
+    if (knowledgeBase) {
+      setLiveMetrics({
+        total_entities: knowledgeBase.metadata.total_entities,
+        entities_by_type: knowledgeBase.metadata.entities_by_type,
+        relationships_detected: knowledgeBase.entities.reduce((acc: number, entity: KnowledgeEntity) => 
+          acc + entity.relationships.length, 0
+        )
+      });
+    } else {
+      // Default mock data for demo purposes
+      setLiveMetrics({
+        total_entities: 1247,
+        entities_by_type: {
+          'project_case_study': 3,
+          'architectural_principle': 15,
+          'insight': 18,
+          'testimonial': 10
+        },
+        relationships_detected: 89
+      });
     }
   };
 
