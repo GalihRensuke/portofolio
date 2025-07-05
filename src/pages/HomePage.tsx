@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Search } from 'lucide-react';
+import React, { useRef, useEffect } from 'react';
+import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import ParticleBackground from '../components/ParticleBackground';
 import InteractiveSystemCube from '../components/InteractiveSystemCube';
@@ -12,12 +11,23 @@ import PersonaSelector from '../components/PersonaSelector';
 import ProactiveAIConcierge from '../components/ProactiveAIConcierge';
 import { usePersonalization, Persona } from '../hooks/usePersonalization';
 import { useUserBehaviorStore } from '../store/userBehaviorStore';
+import { galyarderInsights } from '../data/galyarderInsights';
 
 const HomePage = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const personalization = usePersonalization();
-  const [selectedPersona, setSelectedPersona] = useState<Persona>(personalization.persona);
+  const [selectedPersona, setSelectedPersona] = React.useState<Persona>(personalization.persona);
   const { setCurrentPage, setScrollDepth } = useUserBehaviorStore();
   const navigate = useNavigate();
+
+  // Scroll tracking for the entire narrative
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"]
+  });
+
+  // Smooth spring animations
+  const smoothProgress = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
 
   useEffect(() => {
     setCurrentPage('/');
@@ -25,22 +35,16 @@ const HomePage = () => {
 
   // Track scroll depth
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollTop = window.pageYOffset;
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const scrollPercent = (scrollTop / docHeight) * 100;
-      setScrollDepth(scrollPercent);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [setScrollDepth]);
+    const unsubscribe = scrollYProgress.onChange((latest) => {
+      setScrollDepth(latest * 100);
+    });
+    return unsubscribe;
+  }, [scrollYProgress, setScrollDepth]);
 
   const handlePersonaChange = (persona: Persona) => {
     setSelectedPersona(persona);
     localStorage.setItem('galyarder_persona', persona);
     
-    // Navigate to specific pages based on persona
     switch (persona) {
       case 'founder':
         navigate('/about');
@@ -52,214 +56,318 @@ const HomePage = () => {
         navigate('/blueprint');
         break;
       default:
-        // Stay on current page for default persona
         break;
     }
   };
 
+  // Narrative phases with scroll-based transforms
+  const narrativePhases = [
+    {
+      range: [0, 0.15],
+      text: "In the beginning, there was chaos...",
+      subtitle: "Systems without structure. Processes without purpose.",
+      position: "top-1/4"
+    },
+    {
+      range: [0.15, 0.3],
+      text: "Clear > Clever",
+      subtitle: "The most elegant solution is often the one that can be understood by your future self at 3 AM.",
+      position: "top-1/3"
+    },
+    {
+      range: [0.3, 0.45],
+      text: "Systems thinking reveals the truth:",
+      subtitle: "The bottleneck is rarely where you think it is. Look for the constraint that constrains the constraint.",
+      position: "top-2/5"
+    },
+    {
+      range: [0.45, 0.6],
+      text: "Async-first architecture",
+      subtitle: "isn't just about performance—it's about building systems that can evolve without breaking.",
+      position: "top-1/2"
+    },
+    {
+      range: [0.6, 0.75],
+      text: "The best automation eliminates decisions,",
+      subtitle: "not just tasks. Reduce cognitive overhead, not just manual work.",
+      position: "top-3/5"
+    },
+    {
+      range: [0.75, 0.9],
+      text: "Build systems that compound intelligence over time.",
+      subtitle: "Each interaction should make the system smarter.",
+      position: "top-2/3"
+    }
+  ];
+
+  // Transform functions for each narrative phase
+  const createPhaseTransforms = (phase: typeof narrativePhases[0]) => {
+    const opacity = useTransform(
+      smoothProgress,
+      [phase.range[0] - 0.05, phase.range[0], phase.range[1], phase.range[1] + 0.05],
+      [0, 1, 1, 0]
+    );
+    
+    const y = useTransform(
+      smoothProgress,
+      [phase.range[0] - 0.05, phase.range[0], phase.range[1], phase.range[1] + 0.05],
+      [50, 0, 0, -50]
+    );
+
+    const scale = useTransform(
+      smoothProgress,
+      [phase.range[0], phase.range[0] + 0.02, phase.range[1] - 0.02, phase.range[1]],
+      [0.8, 1, 1, 0.8]
+    );
+
+    return { opacity, y, scale };
+  };
+
+  // System Cube emergence transforms
+  const cubeOpacity = useTransform(smoothProgress, [0.85, 0.95], [0, 1]);
+  const cubeScale = useTransform(smoothProgress, [0.85, 0.95], [0.3, 1]);
+  const cubeY = useTransform(smoothProgress, [0.85, 0.95], [100, 0]);
+
+  // Final revelation transforms
+  const finalOpacity = useTransform(smoothProgress, [0.9, 1], [0, 1]);
+  const finalY = useTransform(smoothProgress, [0.9, 1], [50, 0]);
+
+  // Background intensity based on scroll
+  const backgroundIntensity = useTransform(smoothProgress, [0, 0.5, 1], [0.3, 0.8, 1]);
+
   return (
-    <div className="pt-16">
-      {/* Hero Section - Mission Control */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-950 via-gray-900 to-indigo-950">
-        <ParticleBackground isAITyping={false} />
+    <div ref={containerRef} className="relative">
+      {/* Narrative Canvas - Very tall for long scrolling */}
+      <div className="h-[500vh] relative">
         
-        {/* Grid overlay */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(99,102,241,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.03)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
-        
-        <div className="relative z-10 max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
-          {/* Left Side - Content */}
-          <div className="text-center lg:text-left">
+        {/* Dynamic Particle Background */}
+        <div className="fixed inset-0 z-0">
+          <motion.div
+            style={{ opacity: backgroundIntensity }}
+            className="w-full h-full"
+          >
+            <ParticleBackground isAITyping={false} />
+          </motion.div>
+        </div>
+
+        {/* Atmospheric Grid Overlay */}
+        <motion.div 
+          className="fixed inset-0 z-10 pointer-events-none"
+          style={{ 
+            opacity: useTransform(smoothProgress, [0, 0.3, 0.7, 1], [0.1, 0.3, 0.2, 0.4])
+          }}
+        >
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(99,102,241,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.03)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
+        </motion.div>
+
+        {/* Sticky Narrative Container */}
+        <div className="sticky top-0 h-screen flex items-center justify-center z-20">
+          <div className="max-w-6xl mx-auto px-6 text-center">
+            
+            {/* Opening Status Badge */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="mb-6"
+              style={{
+                opacity: useTransform(smoothProgress, [0, 0.1, 0.15], [1, 1, 0]),
+                y: useTransform(smoothProgress, [0, 0.1, 0.15], [0, 0, -50])
+              }}
+              className="mb-8"
             >
               <StatusBadge />
             </motion.div>
 
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-6xl md:text-8xl font-black mb-4 text-white"
-            >
-              Galyarder
-            </motion.h1>
-            
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="text-3xl md:text-4xl font-bold mb-8 bg-gradient-to-r from-indigo-400 via-purple-400 to-blue-400 bg-clip-text text-transparent"
-            >
-              Autonomous Systems Architect
-            </motion.div>
-
-            <motion.p
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-              className="text-xl text-gray-300 mb-8 max-w-2xl leading-relaxed"
-            >
-              Engineering intelligent systems that qualify opportunities, demonstrate capability, 
-              and generate authority autonomously.
-            </motion.p>
-
-            {/* Dynamic CTAs */}
-            <DynamicCTA personalization={personalization} />
-
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 1.0 }}
-              className="text-sm text-gray-400 space-y-4"
-            >
-              <MissionControl additionalText="Building Galyarder Ascendancy" />
+            {/* Narrative Phases */}
+            {narrativePhases.map((phase, index) => {
+              const transforms = createPhaseTransforms(phase);
               
-              <div className="flex flex-col space-y-2">
-                <SemanticQuery />
-                <div className="flex items-center justify-center lg:justify-start space-x-2 text-gray-500">
+              return (
+                <motion.div
+                  key={index}
+                  style={{
+                    opacity: transforms.opacity,
+                    y: transforms.y,
+                    scale: transforms.scale
+                  }}
+                  className="absolute inset-0 flex flex-col items-center justify-center"
+                >
+                  <motion.h1 
+                    className="text-4xl md:text-6xl lg:text-7xl font-black mb-6 text-white leading-tight"
+                    style={{
+                      textShadow: "0 0 30px rgba(99, 102, 241, 0.5)"
+                    }}
+                  >
+                    {phase.text}
+                  </motion.h1>
+                  
+                  <motion.p 
+                    className="text-xl md:text-2xl text-gray-300 max-w-4xl leading-relaxed"
+                    style={{
+                      opacity: useTransform(
+                        smoothProgress,
+                        [phase.range[0] + 0.02, phase.range[0] + 0.05],
+                        [0, 1]
+                      )
+                    }}
+                  >
+                    {phase.subtitle}
+                  </motion.p>
+                </motion.div>
+              );
+            })}
 
-              {/* Persona Selector */}
-              <div className="flex justify-center lg:justify-start">
-                <PersonaSelector 
-                  currentPersona={selectedPersona}
-                  onPersonaChange={handlePersonaChange}
-                />
-              </div>
+            {/* System Cube Emergence - The Climax */}
+            <motion.div
+              style={{
+                opacity: cubeOpacity,
+                scale: cubeScale,
+                y: cubeY
+              }}
+              className="absolute inset-0 flex items-center justify-center"
+            >
+              <div className="text-center">
+                <motion.h2 
+                  className="text-3xl md:text-5xl font-bold mb-8 bg-gradient-to-r from-indigo-400 via-purple-400 to-blue-400 bg-clip-text text-transparent"
+                  style={{
+                    opacity: useTransform(smoothProgress, [0.87, 0.92], [0, 1])
+                  }}
+                >
+                  Behold: The System
+                </motion.h2>
+                
+                <div className="relative">
+                  <InteractiveSystemCube />
+                  
+                  {/* Mystical Glow Effect */}
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-blue-500/20 rounded-full blur-3xl"
+                    animate={{
+                      scale: [1, 1.2, 1],
+                      opacity: [0.3, 0.6, 0.3]
+                    }}
+                    transition={{
+                      duration: 4,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  />
                 </div>
               </div>
             </motion.div>
-          </div>
 
-          {/* Right Side - Interactive 3D System */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8, rotateY: -30 }}
-            animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-            transition={{ duration: 1.4, delay: 0.6, type: "spring", stiffness: 100 }}
-            className="relative flex items-center justify-center"
-          >
-            <InteractiveSystemCube />
-          </motion.div>
-        </div>
-
-        {/* Bottom gradient fade */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-gray-950 to-transparent" />
-      </section>
-
-      {/* Core Capabilities - V4 Features */}
-      <section className="py-24 px-6 bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl font-bold mb-8">Portfolio V4: Adaptive Intelligence Engine</h2>
-            <p className="text-lg text-gray-600 dark:text-gray-300 mb-12 leading-relaxed max-w-4xl mx-auto">
-              This portfolio dynamically adapts to each visitor's context, persona, and intent. 
-              Every interaction is personalized to maximize relevance and conversion potential.
-            </p>
-          </motion.div>
-          
-          <div className="grid md:grid-cols-3 gap-8">
+            {/* Final Revelation */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              viewport={{ once: true }}
-              className="p-8 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-500 transition-colors"
+              style={{
+                opacity: finalOpacity,
+                y: finalY
+              }}
+              className="absolute inset-0 flex flex-col items-center justify-center"
             >
-              <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center mb-6">
-                <Search className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="text-xl font-bold mb-4">Dynamic CTA Engine</h3>
-              <p className="text-gray-600 dark:text-gray-300 mb-4">
-                Primary actions morph based on UTM parameters and visitor context. DeFi campaigns see 
-                "Analyze DeFi Strategy," AI campaigns see "Deploy AI Agent."
-              </p>
-              <div className="text-sm text-indigo-500 font-medium">
-                UTM detection → Context mapping → Personalized CTA
-              </div>
-            </motion.div>
+              <motion.h1
+                className="text-6xl md:text-8xl font-black mb-6 text-white"
+                animate={{
+                  textShadow: [
+                    "0 0 20px rgba(99, 102, 241, 0.5)",
+                    "0 0 40px rgba(99, 102, 241, 0.8)",
+                    "0 0 20px rgba(99, 102, 241, 0.5)"
+                  ]
+                }}
+                transition={{ duration: 3, repeat: Infinity }}
+              >
+                Galyarder
+              </motion.h1>
+              
+              <motion.div
+                className="text-3xl md:text-4xl font-bold mb-8 bg-gradient-to-r from-indigo-400 via-purple-400 to-blue-400 bg-clip-text text-transparent"
+                style={{
+                  opacity: useTransform(smoothProgress, [0.92, 0.96], [0, 1])
+                }}
+              >
+                Autonomous Systems Architect
+              </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              viewport={{ once: true }}
-              className="p-8 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-500 transition-colors"
-            >
-              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center mb-6">
-                <Search className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="text-xl font-bold mb-4">Persona-Based Routing</h3>
-              <p className="text-gray-600 dark:text-gray-300 mb-4">
-                Content adapts to visitor persona. Founders see ROI metrics first, developers see 
-                technical architecture, investors see scalability data.
-              </p>
-              <div className="text-sm text-indigo-500 font-medium">
-                Persona detection → Content prioritization → Optimized presentation
-              </div>
-            </motion.div>
+              <motion.p
+                className="text-xl text-gray-300 mb-8 max-w-3xl leading-relaxed"
+                style={{
+                  opacity: useTransform(smoothProgress, [0.94, 0.98], [0, 1])
+                }}
+              >
+                Engineering intelligent systems that qualify opportunities, demonstrate capability, 
+                and generate authority autonomously.
+              </motion.p>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              viewport={{ once: true }}
-              className="p-8 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-500 transition-colors"
-            >
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center mb-6">
-                <Search className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="text-xl font-bold mb-4">Proactive AI Concierge</h3>
-              <p className="text-gray-600 dark:text-gray-300 mb-4">
-                Conversational AI agent powered by the vector knowledge base. Proactively engages 
-                on exit-intent, answers questions, and guides users to conversion.
-              </p>
-              <div className="text-sm text-indigo-500 font-medium">
-                Behavioral triggers → AI engagement → Guided conversion
-              </div>
+              {/* Interactive Elements */}
+              <motion.div
+                style={{
+                  opacity: useTransform(smoothProgress, [0.96, 1], [0, 1])
+                }}
+                className="space-y-6"
+              >
+                <DynamicCTA personalization={personalization} />
+                
+                <div className="flex flex-col space-y-4">
+                  <MissionControl additionalText="Building Galyarder Ascendancy" />
+                  
+                  <div className="flex flex-col space-y-2">
+                    <SemanticQuery />
+                    <div className="flex justify-center">
+                      <PersonaSelector 
+                        currentPersona={selectedPersona}
+                        onPersonaChange={handlePersonaChange}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
             </motion.div>
           </div>
         </div>
-      </section>
 
-      {/* System Metrics */}
-      <section className="py-24 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-3xl font-bold mb-8">V4 Performance Metrics</h2>
-            <p className="text-lg text-gray-600 dark:text-gray-300 mb-12 leading-relaxed">
-              Portfolio V4 operates as an intelligent sales agent, not a static presentation.
-            </p>
-            
-            <div className="grid md:grid-cols-4 gap-8">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-indigo-500 mb-2">95%</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Personalization Accuracy</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-indigo-500 mb-2">60%</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Conversion Rate Improvement</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-indigo-500 mb-2">24/7</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Intelligent Operation</div>
-              </div>
-            </div>
-          </motion.div>
+        {/* Scroll Progress Indicator */}
+        <motion.div
+          className="fixed bottom-8 right-8 z-30"
+          style={{
+            opacity: useTransform(scrollYProgress, [0, 0.1, 0.9, 1], [0, 1, 1, 0])
+          }}
+        >
+          <div className="w-2 h-32 bg-gray-800 rounded-full overflow-hidden">
+            <motion.div
+              className="w-full bg-gradient-to-t from-indigo-500 to-purple-500 rounded-full"
+              style={{
+                height: useTransform(scrollYProgress, [0, 1], ["0%", "100%"])
+              }}
+            />
+          </div>
+        </motion.div>
+
+        {/* Mystical Particles for Atmosphere */}
+        <div className="fixed inset-0 z-15 pointer-events-none">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-1 h-1 bg-indigo-400 rounded-full"
+              animate={{
+                x: [
+                  Math.random() * window.innerWidth,
+                  Math.random() * window.innerWidth,
+                  Math.random() * window.innerWidth
+                ],
+                y: [
+                  Math.random() * window.innerHeight,
+                  Math.random() * window.innerHeight,
+                  Math.random() * window.innerHeight
+                ],
+                opacity: [0, 1, 0],
+                scale: [0, 1, 0]
+              }}
+              transition={{
+                duration: 10 + Math.random() * 10,
+                repeat: Infinity,
+                delay: Math.random() * 5,
+                ease: "easeInOut"
+              }}
+            />
+          ))}
         </div>
-      </section>
+      </div>
 
       {/* Proactive AI Concierge */}
       <ProactiveAIConcierge />
