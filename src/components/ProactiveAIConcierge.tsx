@@ -307,12 +307,13 @@ const ProactiveAIConcierge = () => {
 
   // Handle proactive messages
   useEffect(() => {
-    if (currentMessage && !isOpen) {
-      setIsOpen(true);
-      setHasShownWelcome(true);
-      streamAssistantMessage(currentMessage.content);
-      clearCurrentMessage();
-    }
+    // Disabled proactive messages - AI only opens when clicked
+    // if (currentMessage && !isOpen) {
+    //   setIsOpen(true);
+    //   setHasShownWelcome(true);
+    //   streamAssistantMessage(currentMessage.content);
+    //   clearCurrentMessage();
+    // }
   }, [currentMessage, isOpen]);
 
   // Show welcome message when AI is first opened
@@ -340,77 +341,79 @@ const ProactiveAIConcierge = () => {
   }, [isOpen, hasShownWelcome, conversation.messages.length, sessionId]);
   // Listen for AI trigger events from contact page
   useEffect(() => {
-    const handleAITrigger = (event: CustomEvent) => {
-      const { message, context, source } = event.detail;
-      
-      if (!isOpen) {
-        setIsOpen(true);
-        setHasShownWelcome(true);
-      }
-      
-      // Add the triggered message as if user sent it
-      addMessage('user', message);
-      
-      // Process the message through AI
-      setConversation(prev => ({ ...prev, isTyping: true, showSuggestions: false }));
-      
-      setTimeout(async () => {
-        try {
-          const response = await sendMessageToWebhook(message, sessionId);
-          streamAssistantMessage(response);
-        } catch (error) {
-          console.error('Failed to get AI response:', error);
-          streamAssistantMessage("I can help you schedule a consultation with Galyarder. What type of project would you like to discuss?");
-        } finally {
-          setConversation(prev => ({ ...prev, isTyping: false }));
-        }
-      }, 1000);
-    };
+    // Disabled automatic AI triggers from contact page
+    // const handleAITrigger = (event: CustomEvent) => {
+    //   const { message, context, source } = event.detail;
+    //   
+    //   if (!isOpen) {
+    //     setIsOpen(true);
+    //     setHasShownWelcome(true);
+    //   }
+    //   
+    //   // Add the triggered message as if user sent it
+    //   addMessage('user', message);
+    //   
+    //   // Process the message through AI
+    //   setConversation(prev => ({ ...prev, isTyping: true, showSuggestions: false }));
+    //   
+    //   setTimeout(async () => {
+    //     try {
+    //       const response = await sendMessageToWebhook(message, sessionId);
+    //       streamAssistantMessage(response);
+    //     } catch (error) {
+    //       console.error('Failed to get AI response:', error);
+    //       streamAssistantMessage("I can help you schedule a consultation with Galyarder. What type of project would you like to discuss?");
+    //     } finally {
+    //       setConversation(prev => ({ ...prev, isTyping: false }));
+    //     }
+    //   }, 1000);
+    // };
 
-    window.addEventListener('triggerAIConcierge', handleAITrigger as EventListener);
-    return () => window.removeEventListener('triggerAIConcierge', handleAITrigger as EventListener);
+    // window.addEventListener('triggerAIConcierge', handleAITrigger as EventListener);
+    // return () => window.removeEventListener('triggerAIConcierge', handleAITrigger as EventListener);
   }, [isOpen, sessionId]);
 
   // Proactive triggers for exit intent and inactivity
   useEffect(() => {
-    let inactivityTimer: NodeJS.Timeout;
-    let exitIntentListener: (e: MouseEvent) => void;
+    // Disabled all proactive triggers - AI only opens when manually clicked
+    // let inactivityTimer: NodeJS.Timeout;
+    // let exitIntentListener: (e: MouseEvent) => void;
 
-    const triggerProactively = () => {
-      if (!isOpen && conversation.messages.length === 0) {
-        setIsOpen(true);
-        // Welcome message will be triggered by useEffect
-      }
-    };
+    // const triggerProactively = () => {
+    //   if (!isOpen && conversation.messages.length === 0) {
+    //     setIsOpen(true);
+    //     // Welcome message will be triggered by useEffect
+    //   }
+    // };
 
-    // Trigger after 15 seconds of inactivity
-    const resetInactivityTimer = () => {
-      clearTimeout(inactivityTimer);
-      inactivityTimer = setTimeout(triggerProactively, 15000);
-    };
+    // // Trigger after 15 seconds of inactivity
+    // const resetInactivityTimer = () => {
+    //   clearTimeout(inactivityTimer);
+    //   inactivityTimer = setTimeout(triggerProactively, 15000);
+    // };
 
-    // Trigger on exit intent (desktop only)
-    exitIntentListener = (e: MouseEvent) => {
-      if (e.clientY <= 0 && window.innerWidth >= 640) {
-        triggerProactively();
-      }
-    };
+    // // Trigger on exit intent (desktop only)
+    // exitIntentListener = (e: MouseEvent) => {
+    //   if (e.clientY <= 0 && window.innerWidth >= 640) {
+    //     triggerProactively();
+    //   }
+    // };
 
-    // Set up listeners
-    document.addEventListener('mousemove', resetInactivityTimer);
-    document.addEventListener('keypress', resetInactivityTimer);
-    document.addEventListener('scroll', resetInactivityTimer);
-    document.addEventListener('mouseleave', exitIntentListener);
+    // // Set up listeners
+    // document.addEventListener('mousemove', resetInactivityTimer);
+    // document.addEventListener('keypress', resetInactivityTimer);
+    // document.addEventListener('scroll', resetInactivityTimer);
+    // document.addEventListener('mouseleave', exitIntentListener);
 
-    resetInactivityTimer();
+    // resetInactivityTimer();
 
-    return () => {
-      clearTimeout(inactivityTimer);
-      document.removeEventListener('mousemove', resetInactivityTimer);
-      document.removeEventListener('keypress', resetInactivityTimer);
-      document.removeEventListener('scroll', resetInactivityTimer);
-      document.removeEventListener('mouseleave', exitIntentListener);
-    };
+    // return () => {
+    //   clearTimeout(inactivityTimer);
+    //   document.removeEventListener('mousemove', resetInactivityTimer);
+    //   document.removeEventListener('keypress', resetInactivityTimer);
+    //   document.removeEventListener('scroll', resetInactivityTimer);
+    //   document.removeEventListener('mouseleave', exitIntentListener);
+    // };
   }, [isOpen, conversation.messages.length]);
 
   const addMessage = (type: 'user' | 'assistant', content: string, isStreaming: boolean = false) => {
