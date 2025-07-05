@@ -227,11 +227,11 @@ function AppContent() {
 
 function App() {
   const [showBootSequence, setShowBootSequence] = useState(false);
-  const [isBootComplete, setIsBootComplete] = useState(false);
+  const [isBootComplete, setIsBootComplete] = useState(true); // Set to true by default
 
   useEffect(() => {
-    // Always show boot sequence on page load/refresh
-    setShowBootSequence(true);
+    // Boot sequence is now optional - only show if explicitly triggered
+    // setShowBootSequence(true);
   }, []);
 
   const handleBootComplete = () => {
@@ -241,11 +241,11 @@ function App() {
 
   return (
     <>
-      {showBootSequence && (
+      {showBootSequence && !isBootComplete && (
         <SystemBootSequence onBootComplete={handleBootComplete} />
       )}
       
-      {isBootComplete && (
+      {(isBootComplete || !showBootSequence) && (
         <Router>
           <AppContent />
         </Router>
