@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
-import { ExternalLink, Github, ArrowRight, BarChart3, Zap, Target, Info, Calendar, TrendingUp, Users, Quote } from 'lucide-react';
+import { ExternalLink, Github, ArrowRight, BarChart3, Zap, Target, Info, Calendar, TrendingUp, Users, Quote, Star, Brain, Code, X } from 'lucide-react';
 import { ProjectMetrics } from '../lib/supabase';
 import MetricDetailModal from './MetricDetailModal';
 import { getTestimonialsByProject } from '../data/testimonials';
