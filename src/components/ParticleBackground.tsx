@@ -50,6 +50,7 @@ const ParticleBackground: React.FC<ParticleBackgroundProps> = ({ isAITyping = fa
                         radial-gradient(ellipse at 80% 20%, ${pageColors[1]}10 0%, transparent 50%), 
                         radial-gradient(ellipse at 40% 80%, ${pageColors[2]}08 0%, transparent 50%)`
           },
+          }
         />
       </div>
 
