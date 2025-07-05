@@ -34,6 +34,8 @@ const ProjectCaseStudy: React.FC<ProjectCaseStudyProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState<MetricDetailContent | null>(null);
   const [isHovered, setIsHovered] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [showArchModal, setShowArchModal] = useState(false);
 
   // Holographic tilt effect
   const mouseX = useMotionValue(0);
@@ -59,6 +61,95 @@ const ProjectCaseStudy: React.FC<ProjectCaseStudyProps> = ({
 
   // Get testimonials for this project
   const projectTestimonials = getTestimonialsByProject(project.id);
+
+  // Easter egg data for tooltip
+  const getEasterEggData = () => {
+    switch (project.id) {
+      case 'airdropops':
+        return {
+          icon: Star,
+          fact: "Processes opportunities 180x faster than manual analysis",
+          stat: "2.5 hours → 30 seconds per opportunity"
+        };
+      case 'galyarderos':
+        return {
+          icon: Brain,
+          fact: "Eliminated 247 daily micro-decisions through intelligent automation",
+          stat: "85% cognitive load reduction"
+        };
+      case 'prompt-codex':
+        return {
+          icon: Code,
+          fact: "Template inheritance reduces prompt engineering complexity by 70%",
+          stat: "15 hours → 4.5 hours weekly"
+        };
+      default:
+        return null;
+    }
+  };
+
+  const easterEgg = getEasterEggData();
+
+  // Architecture deep dive content
+  const getArchitectureContent = () => {
+    switch (project.id) {
+      case 'airdropops':
+        return {
+          title: "AirdropOps Core Architecture",
+          diagram: `
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│  Telegram API   │───▶│   LLM Analysis   │───▶│  n8n Workflow   │
+│   Monitoring    │    │     Engine       │    │   Execution     │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│ Event Sourcing  │    │ Risk Assessment  │    │ Multi-chain TX  │
+│   Database      │    │    Matrix        │    │   Processing    │
+└─────────────────┘    └──────────────────┘    └─────────────────┘`,
+          codeSnippet: `// Event-driven opportunity processing
+const processOpportunity = async (event) => {
+  const analysis = await llm.analyze(event.content);
+  const riskScore = await assessRisk(analysis);
+  
+  if (riskScore < RISK_THRESHOLD) {
+    await executeWorkflow(analysis);
+  }
+  
+  await logEvent(event, analysis, riskScore);
+};`
+        };
+      case 'galyarderos':
+        return {
+          title: "GalyarderOS Modular Architecture",
+          diagram: `
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   React UI      │───▶│   Zustand State  │───▶│   Supabase      │
+│   Components    │    │   Management     │    │   Backend       │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│ AI Automation   │    │ Decision Engine  │    │ Event Sourcing  │
+│    Layer        │    │    (Rules)       │    │   Database      │
+└─────────────────┘    └──────────────────┘    └─────────────────┘`,
+          codeSnippet: `// Modular decision automation
+const automateDecision = async (context) => {
+  const rules = await getRules(context.type);
+  const decision = await ai.decide(context, rules);
+  
+  if (decision.confidence > 0.8) {
+    await executeAction(decision.action);
+    await logDecision(context, decision);
+  }
+};`
+        };
+      default:
+        return null;
+    }
+  };
+
+  const archContent = getArchitectureContent();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -361,6 +452,39 @@ const ProjectCaseStudy: React.FC<ProjectCaseStudyProps> = ({
               <div>
                 <h3 className="text-xl font-bold mb-2 text-indigo-400 group-hover:text-indigo-300 transition-colors">
                   {project.project_name}
+                  {/* Easter Egg Icon */}
+                  {easterEgg && (
+                    <motion.button
+                      className="ml-3 relative"
+                      onMouseEnter={() => setShowTooltip(true)}
+                      onMouseLeave={() => setShowTooltip(false)}
+                      whileHover={{ scale: 1.2 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <easterEgg.icon className="h-4 w-4 text-yellow-400 hover:text-yellow-300 transition-colors" />
+                      
+                      {/* Animated Tooltip */}
+                      <AnimatePresence>
+                        {showTooltip && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 10, scale: 0.8 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.8 }}
+                            className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 p-3 bg-gray-800 border border-yellow-400/30 rounded-lg shadow-xl z-50"
+                          >
+                            <div className="text-yellow-400 font-semibold text-sm mb-1">
+                              {easterEgg.fact}
+                            </div>
+                            <div className="text-gray-300 text-xs">
+                              {easterEgg.stat}
+                            </div>
+                            {/* Tooltip arrow */}
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.button>
+                  )}
                 </h3>
                 <span className={`px-2 py-1 text-xs rounded-full border font-medium ${getStatusColor(project.status)}`}>
                   {project.status.toUpperCase()}
@@ -479,6 +603,17 @@ const ProjectCaseStudy: React.FC<ProjectCaseStudyProps> = ({
               <ArrowRight className={`h-3 w-3 ml-1 transition-transform ${showDetails ? 'rotate-90' : ''}`} />
             </button>
 
+            {/* Deep Dive Technical Button */}
+            {archContent && (
+              <button
+                onClick={() => setShowArchModal(true)}
+                className="flex items-center text-sm text-purple-400 hover:text-purple-300 transition-colors mt-2"
+              >
+                <Code className="h-4 w-4 mr-1" />
+                [Lihat Arsitektur Inti]
+                <ExternalLink className="h-3 w-3 ml-1" />
+              </button>
+            )}
             <motion.div
               initial={false}
               animate={{ height: showDetails ? 'auto' : 0, opacity: showDetails ? 1 : 0 }}
@@ -515,6 +650,73 @@ const ProjectCaseStudy: React.FC<ProjectCaseStudyProps> = ({
           verificationLevel={modalContent.verificationLevel}
         />
       )}
+
+      {/* Architecture Deep Dive Modal */}
+      <AnimatePresence>
+        {showArchModal && archContent && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setShowArchModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="w-full max-w-4xl bg-gray-900 border border-gray-700 rounded-xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-700">
+                <div className="flex items-center space-x-3">
+                  <Code className="h-6 w-6 text-purple-400" />
+                  <h3 className="text-xl font-bold text-white">{archContent.title}</h3>
+                </div>
+                <button
+                  onClick={() => setShowArchModal(false)}
+                  className="text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-gray-800"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="p-6 space-y-6">
+                {/* Architecture Diagram */}
+                <div>
+                  <h4 className="text-lg font-semibold text-white mb-3">System Diagram</h4>
+                  <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                    <pre className="text-sm text-gray-300 font-mono whitespace-pre overflow-x-auto">
+                      {archContent.diagram}
+                    </pre>
+                  </div>
+                </div>
+
+                {/* Code Example */}
+                <div>
+                  <h4 className="text-lg font-semibold text-white mb-3">Implementation Example</h4>
+                  <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                    <pre className="text-sm text-green-400 font-mono whitespace-pre overflow-x-auto">
+                      {archContent.codeSnippet}
+                    </pre>
+                  </div>
+                </div>
+
+                {/* Technical Notes */}
+                <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                  <h4 className="text-sm font-semibold text-purple-400 mb-2">Architecture Notes</h4>
+                  <p className="text-sm text-gray-300">
+                    This implementation demonstrates async-first patterns, modular design, and horizontal scaling capabilities.
+                    Each component can be developed, tested, and deployed independently.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };

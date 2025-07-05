@@ -8,13 +8,14 @@ import AutonomousIntake from '../components/AutonomousIntake';
 import { useUserBehaviorStore } from '../store/userBehaviorStore';
 import { projectMetrics } from '../data/projectMetrics';
 import { galyarderInsights } from '../data/galyarderInsights';
-import { incrementEngagementScore, ENGAGEMENT_SCORING } from '../utils/gamification';
+import { incrementEngagementScore, ENGAGEMENT_SCORING, getClearanceLevel } from '../utils/gamification';
 import { Terminal, Zap, Brain, Code, Database, Shield, Eye, Cpu, Network, BarChart3, Users, Coins, ArrowRight, ExternalLink, Github, Star, Crown, Rocket } from 'lucide-react';
 
 const HomePage = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const [currentAct, setCurrentAct] = useState(1);
+  const [hasCompletedOdyssey, setHasCompletedOdyssey] = useState(false);
   const { setCurrentPage, setScrollDepth } = useUserBehaviorStore();
 
   // Scroll tracking for the entire odyssey
@@ -40,15 +41,26 @@ const HomePage = () => {
       if (latest < 0.33) setCurrentAct(1);      // Genesis
       else if (latest < 0.66) setCurrentAct(2); // Forging
       else setCurrentAct(3);                    // Ascendancy
+
+      // Award Explorer level when odyssey is completed
+      if (latest > 0.95 && !hasCompletedOdyssey) {
+        setHasCompletedOdyssey(true);
+        // Ensure user reaches Explorer level
+        const currentScore = incrementEngagementScore(50); // Bonus for completing odyssey
+        const level = getClearanceLevel(currentScore);
+        if (level.level === 'Explorer') {
+          console.log('🎉 Explorer clearance achieved through The Galyarder\'s Odyssey!');
+        }
+      }
     });
     return unsubscribe;
-  }, [smoothProgress, setScrollDepth]);
+  }, [smoothProgress, setScrollDepth, hasCompletedOdyssey]);
 
   // ACT 1: GENESIS - Philosophical awakening (0-33%)
   const act1Opacity = useTransform(smoothProgress, [0, 0.1, 0.25, 0.33], [1, 1, 1, 0]);
   const act1Scale = useTransform(smoothProgress, [0, 0.33], [1, 0.8]);
 
-  // Genesis text animations
+  // Genesis text animations - Extended and more dramatic
   const genesis1Opacity = useTransform(smoothProgress, [0, 0.05, 0.12, 0.15], [0, 1, 1, 0]);
   const genesis1Y = useTransform(smoothProgress, [0, 0.05, 0.15], [100, 0, -100]);
 
@@ -58,24 +70,24 @@ const HomePage = () => {
   const genesis3Opacity = useTransform(smoothProgress, [0.16, 0.21, 0.28, 0.31], [0, 1, 1, 0]);
   const genesis3Y = useTransform(smoothProgress, [0.16, 0.21, 0.31], [100, 0, -100]);
 
-  // System Cube revelation
+  // System Cube revelation - More dramatic
   const cubeOpacity = useTransform(smoothProgress, [0.24, 0.30], [0, 1]);
-  const cubeScale = useTransform(smoothProgress, [0.24, 0.30], [0.5, 1]);
+  const cubeScale = useTransform(smoothProgress, [0.24, 0.30], [0.3, 1]);
   const cubeRotation = useTransform(smoothProgress, [0.24, 0.33], [0, 360]);
 
   // ACT 2: FORGING - Project showcase (33-66%)
   const act2Opacity = useTransform(smoothProgress, [0.30, 0.35, 0.60, 0.66], [0, 1, 1, 0]);
   const act2Y = useTransform(smoothProgress, [0.33, 0.66], [100, -100]);
 
-  // Project animations
+  // Project animations - Cinematic zig-zag
   const project1Opacity = useTransform(smoothProgress, [0.35, 0.40, 0.48, 0.52], [0, 1, 1, 0]);
-  const project1X = useTransform(smoothProgress, [0.35, 0.40, 0.52], [-200, 0, 200]);
+  const project1X = useTransform(smoothProgress, [0.35, 0.40, 0.52], [-300, 0, 300]);
 
   const project2Opacity = useTransform(smoothProgress, [0.42, 0.47, 0.55, 0.59], [0, 1, 1, 0]);
-  const project2X = useTransform(smoothProgress, [0.42, 0.47, 0.59], [200, 0, -200]);
+  const project2X = useTransform(smoothProgress, [0.42, 0.47, 0.59], [300, 0, -300]);
 
   const project3Opacity = useTransform(smoothProgress, [0.50, 0.55, 0.62, 0.66], [0, 1, 1, 0]);
-  const project3X = useTransform(smoothProgress, [0.50, 0.55, 0.66], [-200, 0, 200]);
+  const project3X = useTransform(smoothProgress, [0.50, 0.55, 0.66], [-300, 0, 300]);
 
   // ACT 3: ASCENDANCY - Vision and action (66-100%)
   const act3Opacity = useTransform(smoothProgress, [0.63, 0.68], [0, 1]);
@@ -89,12 +101,21 @@ const HomePage = () => {
   const intakeOpacity = useTransform(smoothProgress, [0.85, 0.90], [0, 1]);
   const intakeY = useTransform(smoothProgress, [0.85, 0.90], [100, 0]);
 
+  // Deep dive gates
+  const gatesOpacity = useTransform(smoothProgress, [0.92, 0.97], [0, 1]);
+  const gatesY = useTransform(smoothProgress, [0.92, 0.97], [100, 0]);
+
   // Select key insights for Genesis
   const genesisInsights = [
     "Clear > Clever. The most elegant solution is often the one that can be understood by your future self at 3 AM.",
     "The best automation eliminates decisions, not just tasks. Reduce cognitive overhead, not just manual work.",
     "Build systems that compound intelligence over time. Each interaction should make the system smarter."
   ];
+
+  // Check if user has Explorer clearance for deep dive access
+  const currentScore = incrementEngagementScore(0); // Just check, don't add points
+  const currentLevel = getClearanceLevel(currentScore);
+  const hasExplorerAccess = currentLevel.level !== 'Explorer' ? false : true;
 
   return (
     <div ref={containerRef} className="relative">
@@ -111,10 +132,10 @@ const HomePage = () => {
           className="fixed inset-0 z-5"
           animate={{
             background: currentAct === 1 
-              ? `radial-gradient(ellipse at center, rgba(99, 102, 241, 0.1) 0%, transparent 70%)`
+              ? `radial-gradient(ellipse at center, rgba(99, 102, 241, 0.15) 0%, transparent 70%)`
               : currentAct === 2
-              ? `radial-gradient(ellipse at center, rgba(139, 92, 246, 0.1) 0%, transparent 70%)`
-              : `radial-gradient(ellipse at center, rgba(34, 197, 94, 0.1) 0%, transparent 70%)`
+              ? `radial-gradient(ellipse at center, rgba(139, 92, 246, 0.15) 0%, transparent 70%)`
+              : `radial-gradient(ellipse at center, rgba(34, 197, 94, 0.15) 0%, transparent 70%)`
           }}
           transition={{ duration: 2, ease: "easeInOut" }}
         />
@@ -148,15 +169,15 @@ const HomePage = () => {
               className="mb-16"
             >
               <motion.h1
-                className="text-6xl md:text-8xl lg:text-9xl font-black mb-8 text-white"
+                className="text-6xl md:text-8xl lg:text-[12rem] font-black mb-8 text-white"
                 style={{
                   textShadow: "0 0 40px rgba(99, 102, 241, 0.5)"
                 }}
               >
                 GALYARDER
               </motion.h1>
-              <motion.div className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-blue-400 bg-clip-text text-transparent">
-                Systems Architect • AI Engineer • Web3 Builder
+              <motion.div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-blue-400 bg-clip-text text-transparent">
+                Systems Architect • Reality Shaper • Intelligence Engineer
               </motion.div>
             </motion.div>
 
@@ -167,10 +188,10 @@ const HomePage = () => {
               }}
               className="mb-16"
             >
-              <blockquote className="text-3xl md:text-4xl text-gray-200 italic leading-relaxed max-w-5xl mx-auto">
+              <blockquote className="text-3xl md:text-5xl text-gray-200 italic leading-relaxed max-w-6xl mx-auto">
                 "{genesisInsights[0]}"
               </blockquote>
-              <div className="text-indigo-400 mt-4">— Galyarder Principle #1</div>
+              <div className="text-indigo-400 mt-6 text-xl">— The First Principle</div>
             </motion.div>
 
             <motion.div
@@ -180,10 +201,10 @@ const HomePage = () => {
               }}
               className="mb-16"
             >
-              <blockquote className="text-3xl md:text-4xl text-gray-200 italic leading-relaxed max-w-5xl mx-auto">
+              <blockquote className="text-3xl md:text-5xl text-gray-200 italic leading-relaxed max-w-6xl mx-auto">
                 "{genesisInsights[1]}"
               </blockquote>
-              <div className="text-purple-400 mt-4">— Automation Philosophy</div>
+              <div className="text-purple-400 mt-6 text-xl">— Automation Philosophy</div>
             </motion.div>
 
             {/* System Cube Revelation */}
@@ -196,7 +217,7 @@ const HomePage = () => {
               className="relative"
             >
               <motion.h2 
-                className="text-4xl md:text-5xl font-bold mb-12 bg-gradient-to-r from-indigo-400 via-purple-400 to-blue-400 bg-clip-text text-transparent"
+                className="text-5xl md:text-6xl font-bold mb-16 bg-gradient-to-r from-indigo-400 via-purple-400 to-blue-400 bg-clip-text text-transparent"
                 animate={{
                   backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"]
                 }}
@@ -215,11 +236,11 @@ const HomePage = () => {
                 <motion.div
                   className="absolute inset-0 bg-gradient-to-r from-indigo-500/40 via-purple-500/40 to-blue-500/40 rounded-full blur-3xl"
                   animate={{
-                    scale: [1, 1.5, 1],
-                    opacity: [0.3, 0.6, 0.3],
+                    scale: [1, 1.8, 1],
+                    opacity: [0.3, 0.7, 0.3],
                   }}
                   transition={{
-                    duration: 6,
+                    duration: 8,
                     repeat: Infinity,
                     ease: "easeInOut"
                   }}
@@ -227,7 +248,7 @@ const HomePage = () => {
               </div>
 
               <motion.p
-                className="text-xl text-gray-300 mt-12 max-w-3xl mx-auto"
+                className="text-2xl text-gray-300 mt-16 max-w-4xl mx-auto"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1 }}
@@ -247,24 +268,24 @@ const HomePage = () => {
           className="fixed inset-0 z-20 flex items-center justify-center"
         >
           <div className="max-w-7xl mx-auto px-6">
-            <motion.div className="text-center mb-16">
-              <h2 className="text-6xl md:text-7xl font-bold mb-8 text-white">
+            <motion.div className="text-center mb-20">
+              <h2 className="text-6xl md:text-8xl font-bold mb-8 text-white">
                 FORGED IN PRODUCTION
               </h2>
-              <p className="text-2xl text-gray-300 mb-12">
+              <p className="text-2xl md:text-3xl text-gray-300 mb-12">
                 Systems that transform operations and deliver quantified results
               </p>
             </motion.div>
 
             {/* Cinematic Project Showcase */}
-            <div className="space-y-32">
+            <div className="space-y-40">
               {/* Project 1 - AirdropOps */}
               <motion.div
                 style={{ 
                   opacity: project1Opacity,
                   x: project1X
                 }}
-                className="grid lg:grid-cols-2 gap-12 items-center"
+                className="grid lg:grid-cols-2 gap-16 items-center"
               >
                 <div className="order-2 lg:order-1">
                   <ProjectCaseStudy 
@@ -276,14 +297,14 @@ const HomePage = () => {
                 </div>
                 <div className="order-1 lg:order-2 text-center lg:text-left">
                   <motion.div
-                    className="inline-flex items-center px-4 py-2 bg-green-500/20 text-green-400 rounded-full text-sm font-medium mb-4"
+                    className="inline-flex items-center px-6 py-3 bg-green-500/20 text-green-400 rounded-full text-lg font-bold mb-6"
                     animate={{ scale: [1, 1.05, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
-                    <Coins className="h-4 w-4 mr-2" />
+                    <Coins className="h-6 w-6 mr-3" />
                     PRODUCTION SYSTEM
                   </motion.div>
-                  <h3 className="text-4xl font-bold text-white mb-4">Web3 Automation Engine</h3>
+                  <h3 className="text-5xl font-bold text-white mb-6">Web3 Automation Engine</h3>
                   <p className="text-xl text-gray-300 leading-relaxed">
                     Intelligent pipeline processing 50,000+ opportunities with 92% accuracy. 
                     Event-driven architecture delivering 200% ROI improvement through systematic automation.
@@ -297,18 +318,18 @@ const HomePage = () => {
                   opacity: project2Opacity,
                   x: project2X
                 }}
-                className="grid lg:grid-cols-2 gap-12 items-center"
+                className="grid lg:grid-cols-2 gap-16 items-center"
               >
                 <div className="text-center lg:text-left">
                   <motion.div
-                    className="inline-flex items-center px-4 py-2 bg-blue-500/20 text-blue-400 rounded-full text-sm font-medium mb-4"
+                    className="inline-flex items-center px-6 py-3 bg-blue-500/20 text-blue-400 rounded-full text-lg font-bold mb-6"
                     animate={{ scale: [1, 1.05, 1] }}
                     transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
                   >
-                    <Brain className="h-4 w-4 mr-2" />
+                    <Brain className="h-6 w-6 mr-3" />
                     COGNITIVE SYSTEM
                   </motion.div>
-                  <h3 className="text-4xl font-bold text-white mb-4">Personal AI Operating System</h3>
+                  <h3 className="text-5xl font-bold text-white mb-6">Personal AI Operating System</h3>
                   <p className="text-xl text-gray-300 leading-relaxed">
                     Unified architecture eliminating 85% of decision fatigue. 
                     Modular microservices with AI-powered automation saving 2.5 hours daily.
@@ -330,7 +351,7 @@ const HomePage = () => {
                   opacity: project3Opacity,
                   x: project3X
                 }}
-                className="grid lg:grid-cols-2 gap-12 items-center"
+                className="grid lg:grid-cols-2 gap-16 items-center"
               >
                 <div className="order-2 lg:order-1">
                   <ProjectCaseStudy 
@@ -342,14 +363,14 @@ const HomePage = () => {
                 </div>
                 <div className="order-1 lg:order-2 text-center lg:text-left">
                   <motion.div
-                    className="inline-flex items-center px-4 py-2 bg-purple-500/20 text-purple-400 rounded-full text-sm font-medium mb-4"
+                    className="inline-flex items-center px-6 py-3 bg-purple-500/20 text-purple-400 rounded-full text-lg font-bold mb-6"
                     animate={{ scale: [1, 1.05, 1] }}
                     transition={{ duration: 2, repeat: Infinity, delay: 1 }}
                   >
-                    <Code className="h-4 w-4 mr-2" />
+                    <Code className="h-6 w-6 mr-3" />
                     AI WORKFLOW ENGINE
                   </motion.div>
-                  <h3 className="text-4xl font-bold text-white mb-4">Structured AI Engineering</h3>
+                  <h3 className="text-5xl font-bold text-white mb-6">Structured AI Engineering</h3>
                   <p className="text-xl text-gray-300 leading-relaxed">
                     DSL-based prompt composition reducing development time by 70%. 
                     Template inheritance and performance analytics for consistent AI workflows.
@@ -375,10 +396,10 @@ const HomePage = () => {
                 opacity: visionOpacity,
                 y: visionY
               }}
-              className="mb-16"
+              className="mb-20"
             >
               <motion.h1
-                className="text-6xl md:text-8xl font-black mb-8 text-white"
+                className="text-6xl md:text-9xl font-black mb-12 text-white"
                 animate={{
                   textShadow: [
                     "0 0 30px rgba(99, 102, 241, 0.8)",
@@ -392,7 +413,7 @@ const HomePage = () => {
               </motion.h1>
               
               <motion.p
-                className="text-2xl md:text-3xl text-gray-300 mb-12 leading-relaxed"
+                className="text-2xl md:text-4xl text-gray-300 mb-16 leading-relaxed"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
@@ -403,13 +424,22 @@ const HomePage = () => {
               </motion.p>
 
               <motion.blockquote
-                className="text-xl md:text-2xl text-indigo-300 italic mb-8 max-w-4xl mx-auto"
+                className="text-xl md:text-3xl text-indigo-300 italic mb-12 max-w-5xl mx-auto"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1 }}
               >
                 "{genesisInsights[2]}"
               </motion.blockquote>
+
+              <motion.div
+                className="text-2xl md:text-3xl text-white font-bold"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.5 }}
+              >
+                My systems are complete. The next one is yours.
+              </motion.div>
             </motion.div>
 
             {/* Autonomous Intake Integration */}
@@ -418,7 +448,7 @@ const HomePage = () => {
                 opacity: intakeOpacity,
                 y: intakeY
               }}
-              className="max-w-4xl mx-auto"
+              className="max-w-4xl mx-auto mb-20"
             >
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -428,14 +458,14 @@ const HomePage = () => {
               >
                 <div className="text-center mb-8">
                   <motion.div
-                    className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 rounded-full text-indigo-300 font-semibold mb-4"
+                    className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 rounded-full text-indigo-300 font-semibold mb-6"
                     animate={{ scale: [1, 1.05, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
                     <Rocket className="h-5 w-5 mr-2" />
-                    FLAGSHIP PARTNER MANDATE ACTIVE
+                    INITIATE NEW MISSION
                   </motion.div>
-                  <h3 className="text-3xl font-bold text-white mb-4">Join the Ascendancy</h3>
+                  <h3 className="text-3xl font-bold text-white mb-4">System Deployment Request</h3>
                   <p className="text-gray-300 text-lg">
                     Seeking one organization with a complex challenge that aligns with the three core archetypes.
                     Let's build a definitive case study that produces massive, quantifiable ROI.
@@ -444,42 +474,81 @@ const HomePage = () => {
                 
                 <AutonomousIntake />
               </motion.div>
+            </motion.div>
 
-              {/* Navigation to Other Sections */}
+            {/* Deep Dive Gates - Conditional Access */}
+            <motion.div
+              style={{ 
+                opacity: gatesOpacity,
+                y: gatesY
+              }}
+              className="max-w-4xl mx-auto"
+            >
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1 }}
-                className="mt-12 grid md:grid-cols-2 gap-6"
+                transition={{ delay: 0.5 }}
+                className="text-center mb-8"
               >
+                <h4 className="text-2xl font-bold text-white mb-4">Deep Dive Access</h4>
+                {!hasExplorerAccess ? (
+                  <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg mb-6">
+                    <div className="flex items-center justify-center space-x-2 text-yellow-400">
+                      <Crown className="h-5 w-5" />
+                      <span className="font-semibold">Explorer Clearance Required</span>
+                    </div>
+                    <p className="text-gray-300 text-sm mt-2">
+                      Complete The Galyarder's Odyssey to unlock access to the full architecture
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-green-400 mb-6">
+                    ✓ Explorer clearance verified. Full system access granted.
+                  </p>
+                )}
+              </motion.div>
+
+              <div className="grid md:grid-cols-2 gap-6">
                 <motion.button
-                  onClick={() => navigate('/blueprint')}
-                  className="group p-6 bg-gray-800/50 border border-gray-700 rounded-lg hover:border-indigo-500 transition-all duration-300"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  onClick={() => hasExplorerAccess ? navigate('/blueprint') : null}
+                  className={`group p-6 border rounded-lg transition-all duration-300 ${
+                    hasExplorerAccess 
+                      ? 'bg-gray-800/50 border-gray-700 hover:border-indigo-500 cursor-pointer' 
+                      : 'bg-gray-800/20 border-gray-800 cursor-not-allowed opacity-50'
+                  }`}
+                  whileHover={hasExplorerAccess ? { scale: 1.02 } : {}}
+                  whileTap={hasExplorerAccess ? { scale: 0.98 } : {}}
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <Database className="h-8 w-8 text-indigo-400" />
-                    <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-indigo-400 group-hover:translate-x-1 transition-all" />
+                    <Database className={`h-8 w-8 ${hasExplorerAccess ? 'text-indigo-400' : 'text-gray-600'}`} />
+                    {hasExplorerAccess && (
+                      <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-indigo-400 group-hover:translate-x-1 transition-all" />
+                    )}
                   </div>
-                  <h4 className="text-xl font-semibold text-white mb-2">System Blueprint</h4>
-                  <p className="text-gray-400 text-sm">Explore the architectural principles and mental models</p>
+                  <h4 className="text-xl font-semibold text-white mb-2">Explore the full architecture in [The Blueprint]</h4>
+                  <p className="text-gray-400 text-sm">Interactive system blueprints and design patterns</p>
                 </motion.button>
 
                 <motion.button
-                  onClick={() => navigate('/sandbox')}
-                  className="group p-6 bg-gray-800/50 border border-gray-700 rounded-lg hover:border-purple-500 transition-all duration-300"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  onClick={() => hasExplorerAccess ? navigate('/sandbox') : null}
+                  className={`group p-6 border rounded-lg transition-all duration-300 ${
+                    hasExplorerAccess 
+                      ? 'bg-gray-800/50 border-gray-700 hover:border-purple-500 cursor-pointer' 
+                      : 'bg-gray-800/20 border-gray-800 cursor-not-allowed opacity-50'
+                  }`}
+                  whileHover={hasExplorerAccess ? { scale: 1.02 } : {}}
+                  whileTap={hasExplorerAccess ? { scale: 0.98 } : {}}
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <Zap className="h-8 w-8 text-purple-400" />
-                    <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-purple-400 group-hover:translate-x-1 transition-all" />
+                    <Zap className={`h-8 w-8 ${hasExplorerAccess ? 'text-purple-400' : 'text-gray-600'}`} />
+                    {hasExplorerAccess && (
+                      <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-purple-400 group-hover:translate-x-1 transition-all" />
+                    )}
                   </div>
-                  <h4 className="text-xl font-semibold text-white mb-2">Live Fire Sandbox</h4>
+                  <h4 className="text-xl font-semibold text-white mb-2">Enter the simulation environment in [The Sandbox]</h4>
                   <p className="text-gray-400 text-sm">Experience the Prompt Codex system in action</p>
                 </motion.button>
-              </motion.div>
+              </div>
             </motion.div>
           </div>
         </motion.div>
@@ -554,6 +623,33 @@ const HomePage = () => {
             ))}
           </div>
         </motion.div>
+
+        {/* Completion Achievement */}
+        <AnimatePresence>
+          {hasCompletedOdyssey && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, y: 50 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8, y: 50 }}
+              className="fixed top-20 right-4 z-50 bg-gradient-to-r from-green-500 to-emerald-600 text-white p-4 rounded-lg shadow-2xl border border-green-400/30"
+            >
+              <div className="flex items-center space-x-3">
+                <motion.div
+                  animate={{ rotate: [0, 360] }}
+                  transition={{ duration: 1, ease: "easeInOut" }}
+                >
+                  <Crown className="h-6 w-6 text-yellow-300" />
+                </motion.div>
+                <div>
+                  <div className="font-bold text-sm">Odyssey Complete!</div>
+                  <div className="text-xs opacity-90">
+                    Explorer clearance achieved
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

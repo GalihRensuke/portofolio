@@ -113,7 +113,8 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
-      <Navigation />
+      {/* Navigation only shown on non-home pages */}
+      {location.pathname !== '/' && <Navigation />}
       
       <TransitionParticles isTransitioning={isTransitioning} />
       

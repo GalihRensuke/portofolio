@@ -3,7 +3,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useIntakeStore } from '../store/intakeStore';
 import { ArrowRight, ArrowLeft, CheckCircle, Zap, Clock, DollarSign, Target, Calendar, ExternalLink, Rocket } from 'lucide-react';
 
-const AutonomousIntake = () => {
+interface AutonomousIntakeProps {
+  title?: string;
+  submitButtonText?: string;
+  description?: string;
+}
+
+const AutonomousIntake: React.FC<AutonomousIntakeProps> = ({
+  title = "Autonomous Intake",
+  submitButtonText = "Submit",
+  description = "Intelligent client qualification system. High-value opportunities are fast-tracked, while general inquiries receive automated responses with relevant resources."
+}) => {
   const {
     step,
     intent,
@@ -348,8 +358,8 @@ const AutonomousIntake = () => {
               }}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              <h2 className="text-2xl font-bold text-white mb-2">What brings you here?</h2>
-              <p className="text-gray-400">Select your primary intent</p>
+              <h2 className="text-2xl font-bold text-white mb-2">{title}</h2>
+              <p className="text-gray-400">{description}</p>
               
               {/* Corner Indicators */}
               {[0, 1, 2, 3].map((corner) => (
@@ -829,11 +839,11 @@ const AutonomousIntake = () => {
                 animate={{ opacity: [1, 0.5, 1] }}
                 transition={{ duration: 1, repeat: Infinity }}
               >
-                Processing...
+                TRANSMITTING...
               </motion.span>
             </>
           ) : step === 3 ? (
-            'Submit'
+            submitButtonText
           ) : (
             <>
               Next
