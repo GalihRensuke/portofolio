@@ -660,8 +660,8 @@ const ProactiveAIConcierge = () => {
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             className="fixed z-50 bg-gray-900/95 backdrop-blur-sm border border-gray-700/50 rounded-xl shadow-2xl flex flex-col"
             style={{
-              bottom: window.innerWidth < 640 ? '1rem' : '2rem',
-              right: window.innerWidth < 640 ? '1rem' : '2rem',
+              top: Math.max(20, position.y - (window.innerWidth < 640 ? 300 : 350)),
+              left: Math.max(20, Math.min(window.innerWidth - (window.innerWidth < 640 ? 340 : 440), position.x - 200)),
               width: chatDimensions.width,
               height: chatDimensions.height,
               maxWidth: chatDimensions.maxWidth,
